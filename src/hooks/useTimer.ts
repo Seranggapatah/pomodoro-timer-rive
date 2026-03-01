@@ -1,17 +1,38 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Mode } from "../types";
-
-const FOCUS_DURATION = 25 * 60; // 25 menit dalam detik
-const BREAK_DURATION = 5 * 60;  // 5 menit dalam detik
 
 /**
  * Hook untuk mengelola logika timer Pomodoro.
- * Mengatur countdown, toggle play/pause, reset, dan pergantian mode otomatis.
+ * Mendukung custom durasi, long break, session counting, dan callbacks.
+ *
+ * @param focusDuration    - Durasi focus dalam menit
+ * @param breakDuration    - Durasi short break dalam menit
+ * @param longBreakDuration - Durasi long break dalam menit
+ * @param onTimerComplete  - Callback saat timer habis
+ * @param onTimerReset     - Callback saat timer di-reset sebelum selesai
  */
-export function useTimer() {
-    const [timeLeft, setTimeLeft] = useState(FOCUS_DURATION);
+export function useTimer(
+    focusDuration: number,
+    breakDuration: number,
+    longBreakDuration: number,
+    onTimerComplete?: (completedMode: Mode) => void,
+    onTimerReset?: () => void
+) {
+    const focusSeconds = focusDuration * 60;
+    const breakSeconds = breakDuration * 60;
+    const longBreakSeconds = longBreakDuration * 60;
+
+    const [timeLeft, setTimeLeft] = useState(focusSeconds);
     const [isActive, setIsActive] = useState(false);
     const [mode, setMode] = useState<Mode>("focus");
+    const [sessionCount, setSessionCount] = useState(0); // Jumlah focus session selesai
+
+    // Update timeLeft jika durasi custom berubah dan timer tidak aktif
+    useEffect(() => {
+        if (!isActive) {
+            setTimeLeft(mode === "focus" ? focusSeconds : breakSeconds);
+        }
+    }, [focusDuration, breakDuration, longBreakDuration]);
 
     // Countdown logic
     useEffect(() => {
@@ -21,45 +42,67 @@ export function useTimer() {
             interval = setInterval(() => {
                 setTimeLeft((prev) => prev - 1);
             }, 1000);
-        } else if (timeLeft === 0) {
-            // Timer habis: otomatis pindah mode
+        } else if (isActive && timeLeft === 0) {
+            // Timer habis
             setIsActive(false);
+            const completedMode = mode;
+
             if (mode === "focus") {
-                setMode("break");
-                setTimeLeft(BREAK_DURATION);
+                const newCount = sessionCount + 1;
+                setSessionCount(newCount);
+
+                // Setelah 4 focus session → long break, lalu reset counter
+                if (newCount % 4 === 0) {
+                    setMode("break");
+                    setTimeLeft(longBreakSeconds);
+                } else {
+                    setMode("break");
+                    setTimeLeft(breakSeconds);
+                }
             } else {
                 setMode("focus");
-                setTimeLeft(FOCUS_DURATION);
+                setTimeLeft(focusSeconds);
             }
+
+            onTimerComplete?.(completedMode);
         }
 
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [isActive, timeLeft, mode]);
+    }, [isActive, timeLeft, mode, focusSeconds, breakSeconds, longBreakSeconds, sessionCount, onTimerComplete]);
 
-    const toggleTimer = () => setIsActive((prev) => !prev);
+    const toggleTimer = useCallback(() => setIsActive((prev) => !prev), []);
 
-    const resetTimer = () => {
+    const resetTimer = useCallback(() => {
+        const wasRunning = isActive;
         setIsActive(false);
-        setTimeLeft(mode === "focus" ? FOCUS_DURATION : BREAK_DURATION);
-    };
+        setTimeLeft(mode === "focus" ? focusSeconds : breakSeconds);
+        if (wasRunning) {
+            onTimerReset?.();
+        }
+    }, [isActive, mode, focusSeconds, breakSeconds, onTimerReset]);
 
-    const switchMode = (newMode: Mode) => {
+    const switchMode = useCallback((newMode: Mode) => {
         setMode(newMode);
         setIsActive(false);
-        setTimeLeft(newMode === "focus" ? FOCUS_DURATION : BREAK_DURATION);
-    };
+        setTimeLeft(newMode === "focus" ? focusSeconds : breakSeconds);
+    }, [focusSeconds, breakSeconds]);
 
-    // Format waktu menjadi "MM:SS"
+    // Format "MM:SS"
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     const timeString = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+
+    // Sesi ke berapa dari siklus 4
+    const sessionInCycle = sessionCount % 4;
 
     return {
         timeString,
         isActive,
         mode,
+        sessionCount,
+        sessionInCycle,
         toggleTimer,
         resetTimer,
         switchMode,

@@ -1,19 +1,34 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRive, useViewModelInstanceNumber } from "@rive-app/react-webgl2";
 import catRiv from "../assets/rive/cat.riv";
-import type { Mode } from "../types";
+import type { Mode, RiveMood } from "../types";
 
 interface RiveCharacterProps {
     isActive: boolean;
     isExpanded: boolean;
     mode: Mode;
+    mood: RiveMood;
 }
 
 /**
- * Komponen karakter Rive (kucing).
- * Pose berubah otomatis: 1 saat timer aktif, 0 saat tidak aktif.
+ * Mapping mood → pose number di Rive.
+ * Sesuaikan angka ini dengan pose yang tersedia di file .riv Anda.
+ *   idle    → 0 (diam, default)
+ *   working → 1 (aktif/bergerak)
+ *   happy   → 2 (senang, sesi selesai)
+ *   sad     → 3 (sedih, timer di-reset)
+ *
+ * Catatan: Jika .riv hanya punya 2 pose (0 dan 1),
+ * happy/sad akan fallback ke pose 0 setelah timeout.
  */
-export function RiveCharacter({ isActive, isExpanded, mode }: RiveCharacterProps) {
+const MOOD_TO_POSE: Record<RiveMood, number> = {
+    idle: 0,
+    working: 1,
+    happy: 2,
+    sad: 3,
+};
+
+export function RiveCharacter({ isActive, isExpanded, mode, mood }: RiveCharacterProps) {
     const { RiveComponent, rive } = useRive({
         src: catRiv,
         artboard: "Artboard",
@@ -24,26 +39,49 @@ export function RiveCharacter({ isActive, isExpanded, mode }: RiveCharacterProps
 
     const { setValue: setPose } = useViewModelInstanceNumber(
         "Pose",
-        // @ts-ignore – viewModelInstance belum ada di type definition
+        // @ts-ignore
         rive?.viewModelInstance
     );
 
-    // Sync pose dengan state timer
+    const [displayMood, setDisplayMood] = useState<RiveMood>(mood);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Handle mood changes with temporary reactions
+    useEffect(() => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+        setDisplayMood(mood);
+
+        // happy/sad bersifat sementara, kembali ke idle/working setelah beberapa detik
+        if (mood === "happy") {
+            timeoutRef.current = setTimeout(() => {
+                setDisplayMood(isActive ? "working" : "idle");
+            }, 3000);
+        } else if (mood === "sad") {
+            timeoutRef.current = setTimeout(() => {
+                setDisplayMood("idle");
+            }, 2000);
+        }
+
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, [mood, isActive]);
+
+    // Sync pose ke Rive
     useEffect(() => {
         if (setPose) {
-            setPose(isActive ? 1 : 0);
+            setPose(MOOD_TO_POSE[displayMood]);
         }
-    }, [setPose, isActive]);
+    }, [setPose, displayMood]);
 
     const size = isExpanded ? "expanded" : "compact";
 
     return (
         <div className={`rive-container ${size}`}>
-            {/* Glow effect saat timer aktif & expanded */}
             {isActive && isExpanded && (
                 <div className={`rive-glow ${mode === "focus" ? "focus" : "break"}`} />
             )}
-
             <div className="rive-inner">
                 <RiveComponent
                     className={isExpanded ? "rive-component-expanded" : "rive-component-compact"}

@@ -1,8 +1,9 @@
 import { Play, Pause, RotateCcw } from "lucide-react";
+import type { LayoutMode } from "../types";
 
 interface TimerControlsProps {
     isActive: boolean;
-    isExpanded: boolean;
+    layout: LayoutMode;
     onToggle: () => void;
     onReset: () => void;
 }
@@ -10,29 +11,31 @@ interface TimerControlsProps {
 /**
  * Tombol Play/Pause dan Reset untuk mengontrol timer.
  */
-export function TimerControls({ isActive, isExpanded, onToggle, onReset }: TimerControlsProps) {
-    const size = isExpanded ? "expanded" : "compact";
+export function TimerControls({ isActive, layout, onToggle, onReset }: TimerControlsProps) {
+    const isExpanded = layout === "expanded";
+    const isMini = layout === "mini";
+    const iconSize = isExpanded ? 28 : (isMini ? 14 : 16);
 
     return (
-        <div className={`controls ${size}`}>
+        <div className={`controls ${layout}`}>
             {/* Tombol Play / Pause */}
             <button
                 onClick={onToggle}
-                className={`btn-play ${size} ${isActive ? "active" : "inactive"}`}
+                className={`btn-play ${layout} ${isActive ? "active" : "inactive"}`}
             >
                 {isActive
-                    ? <Pause size={isExpanded ? 28 : 16} fill="currentColor" />
-                    : <Play size={isExpanded ? 28 : 16} fill="currentColor" style={{ marginLeft: 2 }} />
+                    ? <Pause size={iconSize} fill="currentColor" />
+                    : <Play size={iconSize} fill="currentColor" style={{ marginLeft: 2 }} />
                 }
             </button>
 
             {/* Tombol Reset */}
             <button
                 onClick={onReset}
-                className={`btn-reset ${size}`}
-                aria-label="Reset Timer"
+                className={`btn-reset ${layout}`}
+                title="Reset timer"
             >
-                <RotateCcw size={isExpanded ? 24 : 14} />
+                <RotateCcw size={iconSize} />
             </button>
         </div>
     );

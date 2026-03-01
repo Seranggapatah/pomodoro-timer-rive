@@ -1,25 +1,29 @@
-import { Plus, CheckCircle2, Circle, Trash2 } from "lucide-react";
+import { Plus, CheckCircle2, Circle, Trash2, Target } from "lucide-react";
 import type { Task } from "../types";
 
 interface TaskListProps {
     tasks: Task[];
     newTaskText: string;
+    activeTaskId: string | null;
     onNewTaskTextChange: (text: string) => void;
     onAddTask: (e: React.FormEvent) => void;
     onToggleTask: (id: string) => void;
     onDeleteTask: (id: string) => void;
+    onSetActiveTask: (id: string | null) => void;
 }
 
 /**
- * Komponen daftar task: form input + list item.
+ * Komponen daftar task: form input + list item + progress + active selector.
  */
 export function TaskList({
     tasks,
     newTaskText,
+    activeTaskId,
     onNewTaskTextChange,
     onAddTask,
     onToggleTask,
     onDeleteTask,
+    onSetActiveTask,
 }: TaskListProps) {
     return (
         <div className="task-section visible">
@@ -45,7 +49,19 @@ export function TaskList({
             {tasks.length > 0 && (
                 <div className="task-list">
                     {tasks.map((task) => (
-                        <div key={task.id} className="task-item">
+                        <div
+                            key={task.id}
+                            className={`task-item ${activeTaskId === task.id ? "task-active" : ""}`}
+                        >
+                            {/* Tombol set active task */}
+                            <button
+                                onClick={() => onSetActiveTask(activeTaskId === task.id ? null : task.id)}
+                                className={`task-target-btn ${activeTaskId === task.id ? "active" : ""}`}
+                                title={activeTaskId === task.id ? "Deselect task" : "Set as active task"}
+                            >
+                                <Target size={14} />
+                            </button>
+
                             <button
                                 onClick={() => onToggleTask(task.id)}
                                 className="task-toggle-btn"
@@ -59,6 +75,14 @@ export function TaskList({
                                     {task.text}
                                 </span>
                             </button>
+
+                            {/* Pomodoro count */}
+                            {task.pomodoroCount > 0 && (
+                                <span className="task-pomodoro-count">
+                                    🍅{task.pomodoroCount}
+                                </span>
+                            )}
+
                             <button
                                 onClick={() => onDeleteTask(task.id)}
                                 className="task-delete-btn"
