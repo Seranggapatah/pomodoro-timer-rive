@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import "./App.css";
 import type { RiveMood, LayoutMode } from "./types";
+import { Play, Pause, X } from "lucide-react";
 
 // Hooks
 import { useLocalStorage } from "./hooks/useLocalStorage";
@@ -28,6 +29,7 @@ import { AmbientToggle } from "./components/AmbientToggle";
 import { WeeklyDashboard } from "./components/WeeklyDashboard";
 import { GameStats } from "./components/GameStats";
 import { NotesPanel } from "./components/NotesPanel";
+import { TaskDashboardOverlay } from "./components/TaskDashboardOverlay";
 
 /**
  * Komponen utama aplikasi Pomodoro Timer.
@@ -38,6 +40,7 @@ function App() {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("compact");
   const isExpanded = layoutMode === "expanded";
   const [riveMood, setRiveMood] = useState<RiveMood>("idle");
+  const [isTaskDashboardOpen, setIsTaskDashboardOpen] = useState(false);
 
   // Persistent settings
   const [focusDuration, setFocusDuration] = useLocalStorage("pomodoro-focus-min", 25);
@@ -54,12 +57,11 @@ function App() {
   const theme = useTheme();
   const { minimizeToTray, updateTrayTooltip } = useWindowSize(layoutMode);
 
-  // Timer complete: notifikasi + stats + task progress + game + rive happy
   const handleTimerComplete = useCallback((completedMode: "focus" | "break") => {
     notifyTimerComplete(completedMode);
     if (completedMode === "focus") {
       stats.recordSession(focusDuration);
-      tasks.incrementActiveTaskPomodoro();
+      tasks.incrementActiveTaskPomodoro(focusDuration);
       game.recordGameSession();
       setRiveMood("happy");
     }
@@ -69,6 +71,15 @@ function App() {
   const handleTimerReset = useCallback(() => {
     setRiveMood("sad");
   }, []);
+
+  const handleToggleTask = useCallback((id: string) => {
+    const task = tasks.tasks.find(t => t.id === id);
+    if (task && !task.completed) {
+      stats.recordTaskComplete();
+      game.recordTaskComplete();
+    }
+    tasks.toggleTask(id);
+  }, [tasks.tasks, tasks.toggleTask, stats.recordTaskComplete, game.recordTaskComplete]);
 
   const timer = useTimer(focusDuration, breakDuration, longBreakDuration, handleTimerComplete, handleTimerReset);
 
@@ -115,99 +126,145 @@ function App() {
       )}
 
       <div className={`main-content ${layoutMode}`} data-tauri-drag-region>
-        {/* Kolom Kiri */}
-        <div className={`left-column ${layoutMode}`}>
-          <div className={`timer-display ${layoutMode}`}>
-            {timer.timeString}
+        {layoutMode === "mini" ? (
+          <div className="mini-mode-row" data-tauri-drag-region>
+            <div className="mini-rive-wrapper" data-tauri-drag-region>
+              <RiveCharacter
+                isActive={timer.isActive}
+                isExpanded={false}
+                mode={timer.mode}
+                mood={currentMood}
+                layoutMode="mini"
+              />
+            </div>
+
+            <div className={`timer-display mini`} data-tauri-drag-region>
+              {timer.timeString}
+            </div>
+
+            <div className="mini-controls-wrapper">
+              <button className="mini-action-btn" onClick={timer.toggleTimer} title="Play/Pause">
+                {timer.isActive ? <Pause size={14} /> : <Play size={14} />}
+              </button>
+              <button className="mini-action-btn close" onClick={cycleLayout} title="Exit mini mode">
+                <X size={14} />
+              </button>
+            </div>
           </div>
-
-          <TimerControls
-            isActive={timer.isActive}
-            layout={layoutMode}
-            onToggle={timer.toggleTimer}
-            onReset={timer.resetTimer}
-          />
-
-          {/* Expanded-only content */}
-          {isExpanded && (
-            <>
-              <StatsDisplay
-                todaySessions={stats.todaySessions}
-                todayFocusMinutes={stats.todayFocusMinutes}
-                sessionInCycle={timer.sessionInCycle}
-              />
-
-              <TaskList
-                tasks={tasks.tasks}
-                newTaskText={tasks.newTaskText}
-                activeTaskId={tasks.activeTaskId}
-                onNewTaskTextChange={tasks.setNewTaskText}
-                onAddTask={tasks.addTask}
-                onToggleTask={tasks.toggleTask}
-                onDeleteTask={tasks.deleteTask}
-                onSetActiveTask={tasks.setActiveTaskId}
-              />
-
-              <NotesPanel
-                note={notes.note}
-                onNoteChange={notes.setNote}
-              />
-
-              <SettingsPanel
-                focusDuration={focusDuration}
-                breakDuration={breakDuration}
-                longBreakDuration={longBreakDuration}
-                onFocusDurationChange={setFocusDuration}
-                onBreakDurationChange={setBreakDuration}
-                onLongBreakDurationChange={setLongBreakDuration}
-              />
-
-              <div className="bottom-controls">
-                <ModeToggle
-                  mode={timer.mode}
-                  onSwitchMode={timer.switchMode}
-                />
-                <AmbientToggle
-                  ambientType={ambient.ambientType}
-                  onCycle={ambient.cycleAmbient}
-                />
-                <ThemeSelector
-                  currentTheme={theme.themeName}
-                  onSelectTheme={theme.setThemeName}
-                />
-                <button className="tray-btn" onClick={minimizeToTray}>
-                  [minimize_to_tray]
-                </button>
+        ) : (
+          <>
+            {/* Kolom Kiri */}
+            <div className={`left-column ${layoutMode}`}>
+              <div className={`timer-display ${layoutMode}`}>
+                {timer.timeString}
               </div>
-            </>
-          )}
-        </div>
 
-        {/* Kolom Kanan */}
-        {layoutMode !== "mini" && (
-          <div className={`right-column ${layoutMode}`}>
-            <RiveCharacter
-              isActive={timer.isActive}
-              isExpanded={isExpanded}
-              mode={timer.mode}
-              mood={currentMood}
-            />
+              <TimerControls
+                isActive={timer.isActive}
+                layout={layoutMode}
+                onToggle={timer.toggleTimer}
+                onReset={timer.resetTimer}
+              />
 
-            {/* Dashboard & Game di bawah Rive saat expanded */}
-            {isExpanded && (
-              <div className="right-panels">
-                <WeeklyDashboard last7Days={stats.last7Days} />
-                <GameStats
-                  streak={game.streak}
-                  totalSessions={game.totalSessions}
-                  level={game.level}
-                  achievements={game.achievements}
-                />
-              </div>
-            )}
-          </div>
+              {/* Expanded-only content */}
+              {isExpanded && (
+                <>
+                  <StatsDisplay
+                    todaySessions={stats.todaySessions}
+                    todayFocusMinutes={stats.todayFocusMinutes}
+                    sessionInCycle={timer.sessionInCycle}
+                  />
+
+                  <TaskList
+                    tasks={tasks.tasks}
+                    newTaskText={tasks.newTaskText}
+                    activeTaskId={tasks.activeTaskId}
+                    onNewTaskTextChange={tasks.setNewTaskText}
+                    onAddTask={tasks.addTask}
+                    onToggleTask={handleToggleTask}
+                    onDeleteTask={tasks.deleteTask}
+                    onSetActiveTask={tasks.setActiveTaskId}
+                    onOpenDashboard={() => setIsTaskDashboardOpen(true)}
+                  />
+
+                  <NotesPanel
+                    note={notes.note}
+                    onNoteChange={notes.setNote}
+                  />
+
+                  <SettingsPanel
+                    focusDuration={focusDuration}
+                    breakDuration={breakDuration}
+                    longBreakDuration={longBreakDuration}
+                    onFocusDurationChange={setFocusDuration}
+                    onBreakDurationChange={setBreakDuration}
+                    onLongBreakDurationChange={setLongBreakDuration}
+                  />
+
+                  <div className="bottom-controls">
+                    <ModeToggle
+                      mode={timer.mode}
+                      onSwitchMode={timer.switchMode}
+                    />
+                    <AmbientToggle
+                      ambientType={ambient.ambientType}
+                      onCycle={ambient.cycleAmbient}
+                    />
+                    <ThemeSelector
+                      currentTheme={theme.themeName}
+                      onSelectTheme={theme.setThemeName}
+                    />
+                    <button className="tray-btn" onClick={minimizeToTray}>
+                      [minimize_to_tray]
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Kolom Kanan */}
+            <div className={`right-column ${layoutMode}`}>
+              <RiveCharacter
+                isActive={timer.isActive}
+                isExpanded={isExpanded}
+                mode={timer.mode}
+                mood={currentMood}
+              />
+
+              {/* Dashboard & Game di bawah Rive saat expanded */}
+              {isExpanded && (
+                <div className="right-panels">
+                  <WeeklyDashboard last7Days={stats.last7Days} />
+                  <GameStats
+                    streak={game.streak}
+                    totalSessions={game.totalSessions}
+                    totalTasksCompleted={game.totalTasksCompleted}
+                    level={game.level}
+                    achievements={game.achievements}
+                  />
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
+
+      {isTaskDashboardOpen && (
+        <TaskDashboardOverlay
+          tasks={tasks.tasks}
+          onClose={() => setIsTaskDashboardOpen(false)}
+          onAddTask={tasks.addDashboardTask}
+          onToggleTask={handleToggleTask}
+          onArchiveTask={tasks.archiveTask}
+          onUnarchiveTask={tasks.unarchiveTask}
+          onDeleteTask={tasks.deleteTask}
+          onEditTask={tasks.editTask}
+          onAddSubTask={tasks.addSubTask}
+          onToggleSubTask={tasks.toggleSubTask}
+          onDeleteSubTask={tasks.deleteSubTask}
+          onEditSubTask={tasks.editSubTask}
+        />
+      )}
     </div>
   );
 }

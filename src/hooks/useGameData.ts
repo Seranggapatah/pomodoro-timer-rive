@@ -34,6 +34,7 @@ const DEFAULT_GAME: GameData = {
     streak: 0,
     lastActiveDate: "",
     totalSessions: 0,
+    totalTasksCompleted: 0,
     level: 0,
     achievements: ACHIEVEMENT_DEFS.map((a) => ({ ...a, unlocked: false })),
 };
@@ -98,17 +99,24 @@ export function useGameData() {
                 streak: newStreak,
                 lastActiveDate: today,
                 totalSessions: newTotal,
+                totalTasksCompleted: prev.totalTasksCompleted || 0,
                 level: newLevel,
                 achievements: newAchievements,
             };
         });
     }, [setGameData]);
 
+    const recordTaskComplete = useCallback(() => {
+        setGameData(prev => ({ ...prev, totalTasksCompleted: (prev.totalTasksCompleted || 0) + 1 }));
+    }, [setGameData]);
+
     return {
         streak: gameData.streak,
         totalSessions: gameData.totalSessions,
+        totalTasksCompleted: gameData.totalTasksCompleted || 0,
         level: gameData.level,
         achievements,
         recordGameSession,
+        recordTaskComplete,
     };
 }

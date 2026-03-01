@@ -9,6 +9,15 @@ export type Mode = "focus" | "break";
 export type LayoutMode = "mini" | "compact" | "expanded";
 
 /**
+ * Struktur data untuk satu sub task.
+ */
+export interface SubTask {
+    id: string;
+    text: string;
+    completed: boolean;
+}
+
+/**
  * Struktur data untuk satu item task.
  */
 export interface Task {
@@ -16,6 +25,11 @@ export interface Task {
     text: string;
     completed: boolean;
     pomodoroCount: number;
+    archived?: boolean;
+    subtasks?: SubTask[];
+    createdAt?: number;
+    completedAt?: number;
+    timeSpentMinutes?: number;
 }
 
 /**
@@ -38,12 +52,13 @@ export interface ThemeColors {
 }
 
 /**
- * Statistik harian pomodoro.
+ * Statistik harian pomodoro & tasks.
  */
 export interface DailyStats {
     date: string;
     sessions: number;
     totalFocusMinutes: number;
+    completedTasks: number;
 }
 
 /**
@@ -63,6 +78,7 @@ export interface GameData {
     streak: number;
     lastActiveDate: string;
     totalSessions: number;
+    totalTasksCompleted: number;
     level: number;
     achievements: Achievement[];
 }

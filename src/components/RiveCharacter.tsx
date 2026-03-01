@@ -8,6 +8,7 @@ interface RiveCharacterProps {
     isExpanded: boolean;
     mode: Mode;
     mood: RiveMood;
+    layoutMode?: string;
 }
 
 /**
@@ -28,7 +29,7 @@ const MOOD_TO_POSE: Record<RiveMood, number> = {
     sad: 3,
 };
 
-export function RiveCharacter({ isActive, isExpanded, mode, mood }: RiveCharacterProps) {
+export function RiveCharacter({ isActive, isExpanded, mode, mood, layoutMode }: RiveCharacterProps) {
     const { RiveComponent, rive } = useRive({
         src: catRiv,
         artboard: "Artboard",
@@ -75,7 +76,7 @@ export function RiveCharacter({ isActive, isExpanded, mode, mood }: RiveCharacte
         }
     }, [setPose, displayMood]);
 
-    const size = isExpanded ? "expanded" : "compact";
+    const size = layoutMode === "mini" ? "mini" : isExpanded ? "expanded" : "compact";
 
     return (
         <div className={`rive-container ${size}`}>
@@ -84,7 +85,7 @@ export function RiveCharacter({ isActive, isExpanded, mode, mood }: RiveCharacte
             )}
             <div className="rive-inner">
                 <RiveComponent
-                    className={isExpanded ? "rive-component-expanded" : "rive-component-compact"}
+                    className={size === "mini" ? "rive-component-mini" : isExpanded ? "rive-component-expanded" : "rive-component-compact"}
                 />
             </div>
         </div>

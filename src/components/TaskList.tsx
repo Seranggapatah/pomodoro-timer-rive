@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Plus, CheckCircle2, Circle, Trash2, Target } from "lucide-react";
 import type { Task } from "../types";
 
@@ -10,6 +11,7 @@ interface TaskListProps {
     onToggleTask: (id: string) => void;
     onDeleteTask: (id: string) => void;
     onSetActiveTask: (id: string | null) => void;
+    onOpenDashboard: () => void;
 }
 
 /**
@@ -24,9 +26,54 @@ export function TaskList({
     onToggleTask,
     onDeleteTask,
     onSetActiveTask,
+    onOpenDashboard,
 }: TaskListProps) {
+    const [filter, setFilter] = useState<"all" | "active" | "done">("all");
+
+    // Hanya hitung task yang tidak di-archive
+    const unarchivedTasks = tasks.filter((t) => !t.archived);
+    const completedCount = unarchivedTasks.filter((t) => t.completed).length;
+
+    const filteredTasks = unarchivedTasks.filter((task) => {
+        if (filter === "active") return !task.completed;
+        if (filter === "done") return task.completed;
+        return true;
+    });
+
     return (
         <div className="task-section visible">
+            <div className="task-header">
+                <div className="task-tabs">
+                    <button
+                        className={`task-tab ${filter === "all" ? "active" : ""}`}
+                        onClick={() => setFilter("all")}
+                    >
+                        [ ALL ]
+                    </button>
+                    <button
+                        className={`task-tab ${filter === "active" ? "active" : ""}`}
+                        onClick={() => setFilter("active")}
+                    >
+                        [ ACTIVE ]
+                    </button>
+                    <button
+                        className={`task-tab ${filter === "done" ? "active" : ""}`}
+                        onClick={() => setFilter("done")}
+                    >
+                        [ DONE ]
+                    </button>
+                    <button
+                        className="task-tab"
+                        onClick={onOpenDashboard}
+                    >
+                        [ DASHBOARD ]
+                    </button>
+                </div>
+                <div className="task-count">
+                    {completedCount}/{unarchivedTasks.length}
+                </div>
+            </div>
+
             {/* Form tambah task */}
             <form onSubmit={onAddTask} className="task-form">
                 <input
@@ -46,9 +93,9 @@ export function TaskList({
             </form>
 
             {/* Daftar task */}
-            {tasks.length > 0 && (
+            {filteredTasks.length > 0 ? (
                 <div className="task-list">
-                    {tasks.map((task) => (
+                    {filteredTasks.map((task) => (
                         <div
                             key={task.id}
                             className={`task-item ${activeTaskId === task.id ? "task-active" : ""}`}
@@ -92,6 +139,10 @@ export function TaskList({
                         </div>
                     ))}
                 </div>
+            ) : (
+                tasks.length > 0 && (
+                    <div className="task-list-empty">no {filter} tasks</div>
+                )
             )}
         </div>
     );

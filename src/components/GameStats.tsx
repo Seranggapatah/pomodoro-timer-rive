@@ -3,6 +3,7 @@ import type { Achievement } from "../types";
 interface GameStatsProps {
     streak: number;
     totalSessions: number;
+    totalTasksCompleted: number;
     level: number;
     achievements: Achievement[];
 }
@@ -10,7 +11,7 @@ interface GameStatsProps {
 /**
  * Terminal-style gamification display: streak, level, achievements.
  */
-export function GameStats({ streak, totalSessions, level, achievements }: GameStatsProps) {
+export function GameStats({ streak, totalSessions, totalTasksCompleted, level, achievements }: GameStatsProps) {
     const unlockedCount = achievements.filter((a) => a.unlocked).length;
 
     return (
@@ -28,6 +29,10 @@ export function GameStats({ streak, totalSessions, level, achievements }: GameSt
             <div className="game-info-row">
                 <span className="game-label">total:</span>
                 <span className="game-value">{totalSessions} sessions</span>
+            </div>
+            <div className="game-info-row">
+                <span className="game-label">tasks:</span>
+                <span className="game-value">{totalTasksCompleted} solved</span>
             </div>
             <div className="game-info-row">
                 <span className="game-label">next_lvl:</span>

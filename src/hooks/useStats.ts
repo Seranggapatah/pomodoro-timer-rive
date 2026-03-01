@@ -15,7 +15,7 @@ function getDayLabel(dateStr: string): string {
     return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
 }
 
-const EMPTY_DAY: DailyStats = { date: "", sessions: 0, totalFocusMinutes: 0 };
+const EMPTY_DAY: DailyStats = { date: "", sessions: 0, totalFocusMinutes: 0, completedTasks: 0 };
 
 /**
  * Hook untuk melacak statistik pomodoro harian + mingguan.
@@ -42,9 +42,25 @@ export function useStats() {
                         : d
                 );
             } else {
-                updated = [...prev, { date: today, sessions: 1, totalFocusMinutes: focusMinutes }];
+                updated = [...prev, { date: today, sessions: 1, totalFocusMinutes: focusMinutes, completedTasks: 0 }];
             }
             // Hanya simpan 7 hari terakhir
+            return updated.slice(-7);
+        });
+    }, [setWeeklyData]);
+
+    const recordTaskComplete = useCallback(() => {
+        const today = getTodayString();
+        setWeeklyData((prev) => {
+            const existing = prev.find((d) => d.date === today);
+            let updated: DailyStats[];
+            if (existing) {
+                updated = prev.map((d) =>
+                    d.date === today ? { ...d, completedTasks: (d.completedTasks || 0) + 1 } : d
+                );
+            } else {
+                updated = [...prev, { date: today, sessions: 0, totalFocusMinutes: 0, completedTasks: 1 }];
+            }
             return updated.slice(-7);
         });
     }, [setWeeklyData]);
@@ -60,6 +76,7 @@ export function useStats() {
             date: dateStr,
             sessions: found?.sessions || 0,
             totalFocusMinutes: found?.totalFocusMinutes || 0,
+            completedTasks: found?.completedTasks || 0,
             dayLabel: getDayLabel(dateStr),
         });
     }
@@ -67,7 +84,9 @@ export function useStats() {
     return {
         todaySessions: todayStats.sessions,
         todayFocusMinutes: todayStats.totalFocusMinutes,
+        todayCompletedTasks: todayStats.completedTasks,
         last7Days,
         recordSession,
+        recordTaskComplete,
     };
 }
