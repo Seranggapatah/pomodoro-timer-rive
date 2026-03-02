@@ -128,7 +128,6 @@ body,
   flex: 1;
   display: flex;
   position: relative;
-  overflow: hidden;
 }
 
 /* --- Mode Compact --- */
@@ -137,14 +136,36 @@ body,
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px 12px 20px;
+  overflow: hidden;
 }
 
 /* --- Mode Expanded --- */
 .main-content.expanded {
   flex-direction: row;
-  align-items: stretch;
+  align-items: flex-start;
+  /* kolom mengalir sesuai konten */
   padding: 24px;
   gap: 24px;
+  overflow-y: auto;
+  /* SATU scroll untuk seluruh layout */
+  overflow-x: hidden;
+}
+
+.main-content.expanded::-webkit-scrollbar {
+  width: 5px;
+}
+
+.main-content.expanded::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+.main-content.expanded::-webkit-scrollbar-thumb {
+  background-color: var(--text-muted);
+  border-radius: 2px;
+}
+
+.main-content.expanded::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-dim);
 }
 
 /* --- Mode Mini --- */
@@ -221,28 +242,18 @@ body,
 
 .left-column.expanded {
   width: 50%;
-  height: 100%;
+  /* tinggi bebas mengikuti konten */
   justify-content: flex-start;
   gap: 12px;
-  overflow-y: auto;
+  overflow: visible;
   padding-right: 8px;
+  /* sticky: kolom kiri tetap di atas saat scroll */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
 }
 
-.left-column.expanded::-webkit-scrollbar {
-  width: 4px;
-}
 
-.left-column.expanded::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-
-.left-column.expanded::-webkit-scrollbar-thumb {
-  background-color: var(--text-muted);
-}
-
-.left-column.expanded::-webkit-scrollbar-thumb:hover {
-  background-color: var(--text-dim);
-}
 
 /* ===== TIMER DISPLAY ===== */
 .timer-display {
@@ -287,6 +298,37 @@ body,
   }
 }
 
+/* ── Milliseconds / centiseconds display ── */
+.timer-ms {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--text-primary);
+  opacity: 0.28;
+  vertical-align: baseline;
+  transition: opacity 0.25s ease;
+}
+
+/* Bright & slightly animated when running */
+.timer-ms.running {
+  opacity: 0.65;
+}
+
+/* Size scaling per layout */
+.timer-ms.mini {
+  font-size: 14px;
+}
+
+.timer-ms.compact {
+  font-size: 20px;
+}
+
+.timer-ms.expanded {
+  font-size: 36px;
+}
+
+
 /* ===== CONTROLS ===== */
 .controls {
   display: flex;
@@ -313,14 +355,54 @@ body,
   border: 1px solid var(--text-dim);
   cursor: pointer;
   font-family: inherit;
+  position: relative;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+  overflow: visible;
 }
 
 .btn-play:hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
+  box-shadow: 0 0 14px rgba(0, 255, 65, 0.25);
 }
 
 .btn-play:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
+}
+
+/* Burst animation on click */
+.btn-play--burst {
+  animation: btn-burst 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes btn-burst {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0px transparent;
+  }
+
+  20% {
+    transform: scale(1.35);
+    box-shadow: 0 0 32px var(--play-burst-color, #00ff41);
+  }
+
+  45% {
+    transform: scale(0.9);
+  }
+
+  65% {
+    transform: scale(1.12);
+  }
+
+  80% {
+    transform: scale(0.97);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0px transparent;
+  }
 }
 
 .btn-play.mini {
@@ -343,16 +425,19 @@ body,
   background-color: var(--bg-tertiary);
   color: var(--accent-danger);
   border-color: var(--accent-danger);
+  --play-burst-color: #ff3333;
 }
 
 .btn-play.active:hover {
   background-color: #1a0000;
+  box-shadow: 0 0 14px rgba(255, 51, 51, 0.25);
 }
 
 .btn-play.inactive {
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
   border-color: var(--text-primary);
+  --play-burst-color: #00ff41;
 }
 
 .btn-play.inactive:hover {
@@ -710,8 +795,9 @@ body,
 
 .rive-container.expanded {
   width: 100%;
-  flex: 1;
-  min-height: 200px;
+  height: 280px;
+  /* fixed height — selalu terlihat penuh */
+  flex-shrink: 0;
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
   box-shadow: inset 0 0 30px rgba(0, 255, 65, 0.02);
@@ -739,15 +825,14 @@ body,
   width: 100%;
   height: 100%;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
 }
 
 .rive-component-expanded {
-  width: 90%;
-  height: 90%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  margin-bottom: 16px;
 }
 
 .rive-component-compact {
@@ -765,10 +850,10 @@ body,
 }
 
 .rive-component-mini {
-  width: 140%;
-  height: 140%;
+  width: 240%;
+  height: 240%;
   object-fit: cover;
-  transform: translateY(15%);
+  transform: translateY(-24%) translateX(-28%);
 }
 
 /* ===== ANIMATIONS ===== */
@@ -939,9 +1024,9 @@ body,
 
 /* ===== THEME SELECTOR ===== */
 .theme-selector {
-  display: flex;
+  display: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 0px;
 }
 
 .theme-selector-label {
@@ -1150,30 +1235,18 @@ body,
 
 .right-column.expanded {
   width: 50%;
-  height: 100%;
+  /* tinggi mengikuti konten agar parentnya bisa scroll */
   gap: 12px;
-  overflow: hidden;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
 }
 
 .right-panels {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow-y: auto;
-  flex: 1;
-  padding-right: 4px;
-}
-
-.right-panels::-webkit-scrollbar {
-  width: 4px;
-}
-
-.right-panels::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-
-.right-panels::-webkit-scrollbar-thumb {
-  background-color: var(--text-muted);
+  overflow: visible;
 }
 
 /* ===== WEEKLY DASHBOARD ===== */
@@ -1797,10 +1870,7 @@ body,
 
 /* ── Settings panel ── */
 .ascii-panel {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  z-index: 200;
+  z-index: 9000;
   min-width: 230px;
   background: #0e0e0e;
   border: 1px solid #00ff8855;
@@ -1976,4 +2046,97 @@ body,
 .ascii-reset-btn:hover {
   border-color: var(--accent-danger);
   color: var(--accent-danger);
+}
+
+/* ================================================================
+   PLAY BURST EFFECTS
+   ================================================================ */
+
+/* Fixed layer — sits above everything, never blocks clicks */
+.play-burst-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* ── ASCII Particles ── */
+.play-particle {
+  position: absolute;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+  will-change: transform, opacity;
+  white-space: nowrap;
+}
+
+/* ── Ripple Rings ── */
+.play-ripple {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  border: 2px solid #00ff41;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.play-ripple-animate {
+  animation: ripple-expand 0.65s cubic-bezier(0.2, 0.6, 0.4, 1) forwards;
+}
+
+@keyframes ripple-expand {
+  0% {
+    width: 0px;
+    height: 0px;
+    opacity: 0.9;
+    border-width: 3px;
+    border-color: #ffffff;
+  }
+
+  30% {
+    opacity: 0.7;
+    border-color: #00ff88;
+  }
+
+  100% {
+    width: 220px;
+    height: 220px;
+    opacity: 0;
+    border-width: 1px;
+    border-color: #00ff4122;
+  }
+}
+
+/* ── Screen-wide radial pulse flash ── */
+.play-screen-pulse {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: radial-gradient(ellipse at center,
+      rgba(0, 255, 65, 0.18) 0%,
+      rgba(0, 255, 65, 0.06) 40%,
+      transparent 70%);
+  animation: screen-pulse-fade 0.45s ease forwards;
+}
+
+@keyframes screen-pulse-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
 }

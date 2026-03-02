@@ -201,12 +201,14 @@ function App() {
                 mode={timer.mode}
                 mood={currentMood}
                 layoutMode="mini"
+                ascii={ascii}
               />
             </div>
 
             <div className="mini-timer-block" data-tauri-drag-region>
               <div className={`timer-display mini`} data-tauri-drag-region>
                 {timer.timeString}
+                <span className={`timer-ms mini ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
               </div>
 
               {/* Active task indicator — mini mode */}
@@ -214,6 +216,7 @@ function App() {
                 const activeTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
                 return activeTask ? (
                   <div className={`mini-active-task ${timer.isActive ? "running" : ""}`}>
+                    <div className="blink-dot" />
                     <span className="mini-active-task-text" title={activeTask.text}>
                       {activeTask.text}
                     </span>
@@ -237,6 +240,7 @@ function App() {
             <div className={`left-column ${layoutMode}`}>
               <div className={`timer-display ${layoutMode}`}>
                 {timer.timeString}
+                <span className={`timer-ms ${layoutMode} ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
               </div>
 
               <TimerControls

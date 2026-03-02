@@ -27,18 +27,6 @@ export function HourlyChart({ hourlyData }: HourlyChartProps) {
     // Label jam yang ditampilkan
     const SHOW_LABELS = new Set([0, 3, 6, 9, 12, 15, 18, 21, 23]);
 
-    if (totalSessions === 0) {
-        return (
-            <div className="hourly-chart">
-                <div className="hourly-title">&gt; hourly_productivity</div>
-                <div className="dashboard-empty">
-                    <div className="dashboard-empty-text">[ NO_DATA ]</div>
-                    <div className="dashboard-empty-subtext">complete sessions to see hourly patterns</div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="hourly-chart">
             <div className="hourly-header">

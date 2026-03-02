@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { AsciiCharset } from "../hooks/useAsciiFilter";
 import { ASCII_COLORS } from "../hooks/useAsciiFilter";
 
@@ -27,6 +27,20 @@ export function AsciiToggle({ settings, onChange }: AsciiToggleProps) {
     const [panelOpen, setPanelOpen] = useState(false);
     const { enabled, charset, color, charSize, opacity, colorBlend } = settings;
 
+    // Anchor ref — the CFG button — used to position the panel
+    const anchorRef = useRef<HTMLButtonElement>(null);
+    const [panelPos, setPanelPos] = useState({ left: 0, bottom: 0 });
+
+    useEffect(() => {
+        if (panelOpen && anchorRef.current) {
+            const rect = anchorRef.current.getBoundingClientRect();
+            setPanelPos({
+                left: rect.left,
+                bottom: window.innerHeight - rect.top + 6,
+            });
+        }
+    }, [panelOpen]);
+
     return (
         <div className="ascii-widget">
             {/* ── Row 1: toggle + gear ───────────────────── */}
@@ -43,6 +57,7 @@ export function AsciiToggle({ settings, onChange }: AsciiToggleProps) {
 
                 {enabled && (
                     <button
+                        ref={anchorRef}
                         id="ascii-settings-btn"
                         className={`ascii-gear-btn ${panelOpen ? "open" : ""}`}
                         onClick={() => setPanelOpen(v => !v)}
@@ -53,9 +68,17 @@ export function AsciiToggle({ settings, onChange }: AsciiToggleProps) {
                 )}
             </div>
 
-            {/* ── Panel: advanced settings ────────────────── */}
+            {/* ── Panel: fixed-position to escape any overflow clip ── */}
             {enabled && panelOpen && (
-                <div className="ascii-panel">
+                <div
+                    className="ascii-panel"
+                    style={{
+                        position: "fixed",
+                        left: panelPos.left,
+                        bottom: panelPos.bottom,
+                        top: "auto",
+                    }}
+                >
 
                     {/* Charset */}
                     <div className="ascii-row">

@@ -239,7 +239,7 @@
     opacity: 1;
     border-style: solid;
     border-color: var(--accent-focus);
-    box-shadow: inset 0 0 16px var(--border-glow);
+
 }
 
 .expanded-active-label {
@@ -302,13 +302,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 65px;
+    gap: 4px;
+    /* Added gap to accommodate dot */
+    width: 75px;
+    /* Increased slightly to fit dot + text */
     opacity: 0.65;
     transition: opacity 0.3s;
 }
 
 .mini-active-task.running {
     opacity: 1;
+}
+
+.mini-active-task .blink-dot {
+    width: 4px;
+    height: 4px;
+    flex-shrink: 0;
+}
+
+.mini-active-task.running .blink-dot {
+    background-color: var(--accent-focus);
+    animation: pulse-dot 1.5s infinite;
 }
 
 .mini-active-task-text {
@@ -442,6 +456,40 @@
 }
 
 /* HEATMAP */
+
+/* ── Heatmap level colors — intensitas sesi ── */
+.heatmap-cell.level-0 {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+.heatmap-cell.level-1 {
+    background-color: color-mix(in srgb, var(--accent-focus) 25%, var(--bg-primary));
+    border-color: color-mix(in srgb, var(--accent-focus) 20%, transparent);
+}
+
+.heatmap-cell.level-2 {
+    background-color: color-mix(in srgb, var(--accent-focus) 45%, var(--bg-primary));
+    border-color: color-mix(in srgb, var(--accent-focus) 35%, transparent);
+}
+
+.heatmap-cell.level-3 {
+    background-color: color-mix(in srgb, var(--accent-focus) 65%, var(--bg-primary));
+    border-color: color-mix(in srgb, var(--accent-focus) 50%, transparent);
+}
+
+.heatmap-cell.level-4 {
+    background-color: var(--accent-focus);
+    border-color: var(--accent-focus);
+    box-shadow: 0 0 4px var(--accent-focus);
+}
+
+.heatmap-cell.today {
+    outline: 1px solid var(--text-primary);
+    outline-offset: 1px;
+}
+
+
 .activity-heatmap {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
@@ -461,7 +509,6 @@
 .heatmap-grid-wrapper {
     display: flex;
     flex-direction: column;
-    overflow-x: auto;
     gap: 4px;
     padding-bottom: 4px;
     flex: 1;
@@ -588,7 +635,8 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    height: 40px;
+    height: 60px;
+    /* lebih tinggi agar bar terlihat */
 }
 
 .hourly-col {
@@ -601,7 +649,8 @@
 
 .hourly-bar-wrap {
     height: 100%;
-    width: 4px;
+    width: 6px;
+    /* lebih lebar agar mudah dilihat */
     display: flex;
     align-items: flex-end;
     background-color: var(--bg-primary);
@@ -610,16 +659,31 @@
 .hourly-bar {
     width: 100%;
     background-color: var(--text-dim);
-    transition: height 0.3s ease;
+    transition: height 0.3s ease, background-color 0.2s;
+}
+
+.hourly-bar.peak {
+    background-color: var(--accent-focus);
+    box-shadow: 0 0 4px var(--accent-focus);
 }
 
 .hourly-bar:hover {
     background-color: var(--text-primary);
 }
 
+.hourly-bar.peak:hover {
+    background-color: var(--text-primary);
+    box-shadow: none;
+}
+
 .hourly-label {
     font-size: 8px;
     color: var(--text-muted);
+}
+
+.hourly-col:has(.hourly-bar.peak) .hourly-label {
+    color: var(--accent-focus);
+    font-weight: 700;
 }
 
 .hourly-summary {

@@ -17,35 +17,28 @@ export function WeeklyDashboard({ last7Days }: WeeklyDashboardProps) {
         <div className="weekly-dashboard">
             <div className="dashboard-title">&gt; weekly_report</div>
 
-            {totalSessions === 0 ? (
-                <div className="dashboard-empty">
-                    <div className="dashboard-empty-text">[ NO_DATA ]</div>
-                    <div className="dashboard-empty-subtext">complete a session</div>
-                </div>
-            ) : (
-                <div className="dashboard-chart">
-                    {last7Days.map((day) => {
-                        const heightPercent = (day.sessions / maxSessions) * 100;
-                        const isToday = day.date === new Date().toISOString().split("T")[0];
-                        const isEmpty = day.sessions === 0;
+            <div className="dashboard-chart">
+                {last7Days.map((day) => {
+                    const heightPercent = (day.sessions / maxSessions) * 100;
+                    const isToday = day.date === new Date().toISOString().split("T")[0];
+                    const isEmpty = day.sessions === 0;
 
-                        return (
-                            <div key={day.date} className="dashboard-col">
-                                <span className="dashboard-count">{day.sessions || ""}</span>
-                                <div className="dashboard-bar-wrap">
-                                    <div
-                                        className={`dashboard-bar ${isToday ? "today" : ""} ${isEmpty ? "empty" : ""}`}
-                                        style={{ height: `${Math.max(heightPercent, 4)}%` }}
-                                    />
-                                </div>
-                                <span className={`dashboard-day ${isToday ? "today" : ""}`}>
-                                    {day.dayLabel}
-                                </span>
+                    return (
+                        <div key={day.date} className="dashboard-col">
+                            <span className="dashboard-count">{day.sessions || ""}</span>
+                            <div className="dashboard-bar-wrap">
+                                <div
+                                    className={`dashboard-bar ${isToday ? "today" : ""} ${isEmpty ? "empty" : ""}`}
+                                    style={{ height: `${Math.max(heightPercent, 4)}%` }}
+                                />
                             </div>
-                        );
-                    })}
-                </div>
-            )}
+                            <span className={`dashboard-day ${isToday ? "today" : ""}`}>
+                                {day.dayLabel}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
 
             <div className="dashboard-summary">
                 <span className="dashboard-total">
