@@ -18,7 +18,8 @@
         "alwaysOnTop": true,
         "decorations": false,
         "transparent": true,
-        "resizable": true
+        "resizable": true,
+        "acceptFirstMouse": true
       }
     ],
     "security": {

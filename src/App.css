@@ -1650,3 +1650,330 @@ body,
 .meta-icon {
   font-size: 11px;
 }
+
+/* ===== ASCII FILTER ===== */
+
+/* Overlay canvas sits on top of Rive */
+.ascii-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+  image-rendering: pixelated;
+}
+
+.ascii-overlay.visible {
+  opacity: 1;
+}
+
+/* Small badge shown when ASCII is active */
+.ascii-active-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 20;
+  font-size: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+  padding: 1px 5px;
+  border: 1px solid #00ff88;
+  color: #00ff88;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  animation: ascii-badge-blink 2s step-end infinite;
+}
+
+@keyframes ascii-badge-blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ===== ASCII TOGGLE BUTTON GROUP ===== */
+.ascii-toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ascii-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  letter-spacing: 0.06em;
+  transition: all 0.15s ease;
+}
+
+.ascii-toggle-btn:hover {
+  color: var(--text-primary);
+  border-color: #00ff88;
+}
+
+.ascii-toggle-btn.active {
+  color: #00ff88;
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.07);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.15);
+}
+
+.ascii-toggle-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.ascii-toggle-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+.ascii-charset-btn {
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid #00ff8844;
+  color: #00ff88;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  padding: 3px 6px;
+  letter-spacing: 0.04em;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.ascii-charset-btn:hover {
+  background: rgba(0, 255, 136, 0.12);
+  border-color: #00ff88;
+}
+
+/* ── ASCII Widget wrapper ── */
+.ascii-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.ascii-toprow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Gear / config button */
+.ascii-gear-btn {
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid #00ff8866;
+  color: #00ff88;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  padding: 3px 7px;
+  letter-spacing: 0.06em;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.ascii-gear-btn:hover,
+.ascii-gear-btn.open {
+  background: rgba(0, 255, 136, 0.14);
+  border-color: #00ff88;
+}
+
+/* ── Settings panel ── */
+.ascii-panel {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 200;
+  min-width: 230px;
+  background: #0e0e0e;
+  border: 1px solid #00ff8855;
+  padding: 10px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 -4px 24px rgba(0, 255, 136, 0.08);
+  animation: ascii-panel-in 0.15s ease;
+}
+
+@keyframes ascii-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Panel section row */
+.ascii-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ascii-row-label {
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: #00ff8899;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.ascii-hint {
+  font-size: 7px;
+  color: #00ff8844;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
+}
+
+/* Charset grid: 2x2 */
+.ascii-charset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.ascii-charset-cell {
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  transition: all 0.12s ease;
+}
+
+.ascii-charset-cell:hover {
+  border-color: #00ff8866;
+  color: var(--text-primary);
+}
+
+.ascii-charset-cell.active {
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.07);
+  color: #00ff88;
+}
+
+.ascii-cell-preview {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: inherit;
+}
+
+.ascii-cell-label {
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: inherit;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+/* Color swatches */
+.ascii-color-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ascii-swatch {
+  width: 18px;
+  height: 18px;
+  border: 2px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.ascii-swatch:hover {
+  transform: scale(1.2);
+}
+
+.ascii-swatch.active {
+  border-color: white;
+  transform: scale(1.15);
+}
+
+/* Sliders */
+.ascii-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ascii-slider {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 3px;
+  background: #2a2a2a;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  accent-color: #00ff88;
+}
+
+.ascii-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00ff88;
+  cursor: pointer;
+  box-shadow: 0 0 6px #00ff8877;
+  transition: box-shadow 0.12s ease;
+}
+
+.ascii-slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 10px #00ff88;
+}
+
+.ascii-slider-val {
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #00ff88;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* Reset button */
+.ascii-reset-btn {
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  cursor: pointer;
+  align-self: flex-end;
+  transition: all 0.12s ease;
+}
+
+.ascii-reset-btn:hover {
+  border-color: var(--accent-danger);
+  color: var(--accent-danger);
+}

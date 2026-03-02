@@ -27,6 +27,8 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { ThemeSelector } from "./components/ThemeSelector";
 import { StatsDisplay } from "./components/StatsDisplay";
 import { AmbientToggle } from "./components/AmbientToggle";
+import { AsciiToggle } from "./components/AsciiToggle";
+import type { AsciiSettings } from "./components/AsciiToggle";
 import { WeeklyDashboard } from "./components/WeeklyDashboard";
 import { GameStats } from "./components/GameStats";
 import { NotesPanel } from "./components/NotesPanel";
@@ -46,6 +48,20 @@ function App() {
   const isExpanded = layoutMode === "expanded";
   const [riveMood, setRiveMood] = useState<RiveMood>("idle");
   const [isTaskDashboardOpen, setIsTaskDashboardOpen] = useState(false);
+
+  // ASCII filter — single settings object
+  const [ascii, setAscii] = useState<AsciiSettings>({
+    enabled: false,
+    charset: "detailed",
+    color: "#00ff88",
+    charSize: 7,
+    opacity: 0.9,
+    colorBlend: 0.65,
+  });
+
+  const patchAscii = useCallback((patch: Partial<AsciiSettings>) => {
+    setAscii(prev => ({ ...prev, ...patch }));
+  }, []);
 
   // Persistent settings
   const [focusDuration, setFocusDuration] = useLocalStorage("pomodoro-focus-min", 25);
@@ -309,6 +325,10 @@ function App() {
                       currentTheme={theme.themeName}
                       onSelectTheme={theme.setThemeName}
                     />
+                    <AsciiToggle
+                      settings={ascii}
+                      onChange={patchAscii}
+                    />
                     <button className="tray-btn" onClick={minimizeToTray}>
                       [minimize_to_tray]
                     </button>
@@ -325,6 +345,7 @@ function App() {
                 mode={timer.mode}
                 mood={currentMood}
                 xpPercent={game.xpPercent}
+                ascii={ascii}
               />
 
               {/* Dashboard & Game di bawah Rive saat expanded */}
