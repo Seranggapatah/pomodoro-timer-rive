@@ -15,6 +15,9 @@
     "core:window:allow-set-resizable",
     "core:window:allow-hide",
     "core:window:allow-show",
-    "core:window:allow-set-focus"
+    "core:window:allow-set-focus",
+    "core:tray:allow-set-icon",
+    "core:tray:allow-set-tooltip",
+    "core:event:allow-listen"
   ]
 }

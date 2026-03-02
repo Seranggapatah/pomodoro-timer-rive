@@ -8,6 +8,7 @@ import type { Mode } from "../types";
  * @param focusDuration    - Durasi focus dalam menit
  * @param breakDuration    - Durasi short break dalam menit
  * @param longBreakDuration - Durasi long break dalam menit
+ * @param autoStart        - Apakah auto mulai sesi berikutnya ketika selesai
  * @param onTimerComplete  - Callback saat timer habis
  * @param onTimerReset     - Callback saat timer di-reset sebelum selesai
  */
@@ -15,6 +16,7 @@ export function useTimer(
     focusDuration: number,
     breakDuration: number,
     longBreakDuration: number,
+    autoStart: boolean = false,
     onTimerComplete?: (completedMode: Mode) => void,
     onTimerReset?: () => void
 ) {
@@ -44,8 +46,12 @@ export function useTimer(
             }, 1000);
         } else if (isActive && timeLeft === 0) {
             // Timer habis
-            setIsActive(false);
             const completedMode = mode;
+
+            // Apakah otomatis lanjut run atau stop?
+            if (!autoStart) {
+                setIsActive(false);
+            }
 
             if (mode === "focus") {
                 const newCount = sessionCount + 1;
@@ -70,7 +76,7 @@ export function useTimer(
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [isActive, timeLeft, mode, focusSeconds, breakSeconds, longBreakSeconds, sessionCount, onTimerComplete]);
+    }, [isActive, timeLeft, mode, focusSeconds, breakSeconds, longBreakSeconds, sessionCount, autoStart, onTimerComplete]);
 
     const toggleTimer = useCallback(() => setIsActive((prev) => !prev), []);
 

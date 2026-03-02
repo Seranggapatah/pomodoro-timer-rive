@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "pomodoro-timer",
-  "version": "0.1.0",
-  "identifier": "com.pomodoro.app",
+  "productName": "Pomotchi",
+  "version": "1.0.0",
+  "identifier": "com.pomotchi.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "pomodoro-timer",
+        "title": "Pomotchi",
         "width": 480,
         "height": 180,
         "alwaysOnTop": true,
@@ -23,7 +23,8 @@
     ],
     "security": {
       "csp": null
-    }
+    },
+    "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,
@@ -34,6 +35,14 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "Productivity",
+    "shortDescription": "A cute Pomodoro timer to boost your focus",
+    "longDescription": "Pomotchi is a minimal, always-on-top Pomodoro timer with a live menu bar indicator, ambient sounds, task tracking, and a friendly character to keep you company while you work.",
+    "copyright": "© 2025 Pomotchi",
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "signingIdentity": "-"
+    }
   }
 }

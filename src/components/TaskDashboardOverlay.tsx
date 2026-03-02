@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CheckCircle2, Circle, Archive, RotateCcw, Trash2, Plus, CornerDownRight, Edit2 } from "lucide-react";
+import { X, CheckCircle2, Circle, Archive, RotateCcw, Trash2, Plus, CornerDownRight, Edit2, Tag } from "lucide-react";
 import type { Task } from "../types";
 
 interface TaskDashboardOverlayProps {
@@ -15,6 +15,8 @@ interface TaskDashboardOverlayProps {
     onDeleteSubTask: (taskId: string, subtaskId: string) => void;
     onEditTask: (id: string, newText: string) => void;
     onEditSubTask: (taskId: string, subtaskId: string, newText: string) => void;
+    onAddTag: (taskId: string, tag: string) => void;
+    onRemoveTag: (taskId: string, tag: string) => void;
 }
 
 export function TaskDashboardOverlay({
@@ -30,19 +32,29 @@ export function TaskDashboardOverlay({
     onDeleteSubTask,
     onEditTask,
     onEditSubTask,
+    onAddTag,
+    onRemoveTag,
 }: TaskDashboardOverlayProps) {
     const [newTaskText, setNewTaskText] = useState("");
     const [draftSubTask, setDraftSubTask] = useState<Record<string, string>>({});
+    const [tagDraft, setTagDraft] = useState<Record<string, string>>({}); // tag draft per task
+    const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null); // filter by tag
 
     // Edit state
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editingSubTaskId, setEditingSubTaskId] = useState<{ taskId: string, subtaskId: string } | null>(null);
     const [editDraftText, setEditDraftText] = useState("");
 
-    // Categorize
-    const activeTasks = tasks.filter((t) => !t.completed && !t.archived);
-    const completedTasks = tasks.filter((t) => t.completed && !t.archived);
-    const archivedTasks = tasks.filter((t) => t.archived);
+    // Kumpulkan semua tag unik dari semua task
+    const allTags = Array.from(
+        new Set(tasks.flatMap(t => t.tags || []))
+    ).sort();
+
+    // Categorize (apply tag filter)
+    const filterFn = (t: Task) => !activeTagFilter || (t.tags || []).includes(activeTagFilter);
+    const activeTasks = tasks.filter((t) => !t.completed && !t.archived && filterFn(t));
+    const completedTasks = tasks.filter((t) => t.completed && !t.archived && filterFn(t));
+    const archivedTasks = tasks.filter((t) => t.archived && filterFn(t));
     const upcomingTasks = activeTasks.filter((t) => t.pomodoroCount === 0);
 
     const formatDateTime = (timestamp: number | string | undefined) => {
@@ -184,6 +196,59 @@ export function TaskDashboardOverlay({
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Tags */}
+                            {(task.tags || []).length > 0 && (
+                                <div className="task-tags">
+                                    {(task.tags || []).map(tag => (
+                                        <span key={tag} className="task-tag">
+                                            #{tag}
+                                            {!task.archived && !task.completed && (
+                                                <button
+                                                    className="task-tag-remove"
+                                                    onClick={() => onRemoveTag(task.id, tag)}
+                                                    title="Remove tag"
+                                                >×</button>
+                                            )}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Tag input */}
+                            {!task.archived && !task.completed && (
+                                <form
+                                    className="tag-input-form"
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const val = tagDraft[task.id]?.trim();
+                                        if (val) {
+                                            onAddTag(task.id, val);
+                                            setTagDraft(prev => ({ ...prev, [task.id]: "" }));
+                                        }
+                                    }}
+                                >
+                                    <Tag size={10} style={{ color: "var(--text-muted)" }} />
+                                    <input
+                                        type="text"
+                                        className="tag-input"
+                                        placeholder="add tag..."
+                                        value={tagDraft[task.id] || ""}
+                                        onChange={(e) => setTagDraft(prev => ({ ...prev, [task.id]: e.target.value }))}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") e.currentTarget.form?.requestSubmit();
+                                            if (e.key === " " || e.key === ",") {
+                                                e.preventDefault();
+                                                const val = tagDraft[task.id]?.trim();
+                                                if (val) {
+                                                    onAddTag(task.id, val);
+                                                    setTagDraft(prev => ({ ...prev, [task.id]: "" }));
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </form>
+                            )}
 
                             {/* Extended Report */}
                             <div className="task-meta-report">
@@ -342,6 +407,24 @@ export function TaskDashboardOverlay({
                         <div className="td-stat-label">ARCHIVED</div>
                     </div>
                 </div>
+
+                {/* Tag filter bar */}
+                {allTags.length > 0 && (
+                    <div className="tag-filter-bar">
+                        <span className="tag-filter-label"><Tag size={10} /> filter:</span>
+                        <button
+                            className={`tag-filter-btn ${activeTagFilter === null ? "active" : ""}`}
+                            onClick={() => setActiveTagFilter(null)}
+                        >all</button>
+                        {allTags.map(tag => (
+                            <button
+                                key={tag}
+                                className={`tag-filter-btn ${activeTagFilter === tag ? "active" : ""}`}
+                                onClick={() => setActiveTagFilter(prev => prev === tag ? null : tag)}
+                            >#{tag}</button>
+                        ))}
+                    </div>
+                )}
 
                 <div className="task-dashboard-content">
                     <form onSubmit={handleAddTask} className="task-form dashboard-add-form">

@@ -1,17 +1,17 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { Mode } from "../types";
+import type { Mode, LayoutMode } from "../types";
 
 interface TitleBarProps {
     mode: Mode;
-    isExpanded: boolean;
-    onToggleExpand: () => void;
+    layoutMode: LayoutMode;
+    onSetLayout: (mode: LayoutMode) => void;
 }
 
 /**
- * Title bar terminal-style: menampilkan mode dan tombol expand.
+ * Title bar terminal-style: menampilkan mode dan 3 tombol layout (mini, compact, expand).
  * Berfungsi juga sebagai drag region untuk menggeser window.
  */
-export function TitleBar({ mode, isExpanded, onToggleExpand }: TitleBarProps) {
+export function TitleBar({ mode, layoutMode, onSetLayout }: TitleBarProps) {
     const handleDrag = (e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest("button")) return;
         if (e.button === 0) {
@@ -33,13 +33,23 @@ export function TitleBar({ mode, isExpanded, onToggleExpand }: TitleBarProps) {
                 {mode === "focus" ? "focus_session" : "break_time"}
             </span>
 
-            <button
-                className="titlebar-btn"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={onToggleExpand}
-            >
-                {isExpanded ? "[ - ]" : "[ + ]"}
-            </button>
+            <div className="titlebar-controls" onMouseDown={(e) => e.stopPropagation()}>
+                <button
+                    className={`titlebar-btn ${layoutMode === "mini" ? "active" : ""}`}
+                    onClick={() => onSetLayout("mini")}
+                    title="Mini Mode"
+                >[min]</button>
+                <button
+                    className={`titlebar-btn ${layoutMode === "compact" ? "active" : ""}`}
+                    onClick={() => onSetLayout("compact")}
+                    title="Compact Mode"
+                >[cmp]</button>
+                <button
+                    className={`titlebar-btn ${layoutMode === "expanded" ? "active" : ""}`}
+                    onClick={() => onSetLayout("expanded")}
+                    title="Expanded Mode"
+                >[max]</button>
+            </div>
         </div>
     );
 }

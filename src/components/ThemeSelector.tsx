@@ -6,10 +6,13 @@ interface ThemeSelectorProps {
 }
 
 const THEME_OPTIONS: { name: ThemeName; label: string }[] = [
-    { name: "green", label: "grn" },
-    { name: "amber", label: "amb" },
-    { name: "cyan", label: "cyn" },
-    { name: "pink", label: "pnk" },
+    { name: "matrix", label: "mtx" },
+    { name: "cyberpunk", label: "cyb" },
+    { name: "nord", label: "nrd" },
+    { name: "dracula", label: "drc" },
+    { name: "catppuccin", label: "cat" },
+    { name: "outrun", label: "out" },
+    { name: "monochrome", label: "mon" },
 ];
 
 /**

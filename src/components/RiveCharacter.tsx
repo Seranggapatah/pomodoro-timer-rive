@@ -9,6 +9,7 @@ interface RiveCharacterProps {
     mode: Mode;
     mood: RiveMood;
     layoutMode?: string;
+    xpPercent?: number; // 0–100, untuk diteruskan ke Rive
 }
 
 /**
@@ -29,7 +30,7 @@ const MOOD_TO_POSE: Record<RiveMood, number> = {
     sad: 3,
 };
 
-export function RiveCharacter({ isActive, isExpanded, mode, mood, layoutMode }: RiveCharacterProps) {
+export function RiveCharacter({ isActive, isExpanded, mode, mood, layoutMode, xpPercent = 0 }: RiveCharacterProps) {
     const { RiveComponent, rive } = useRive({
         src: catRiv,
         artboard: "Artboard",
@@ -40,6 +41,12 @@ export function RiveCharacter({ isActive, isExpanded, mode, mood, layoutMode }: 
 
     const { setValue: setPose } = useViewModelInstanceNumber(
         "Pose",
+        // @ts-ignore
+        rive?.viewModelInstance
+    );
+
+    const { setValue: setXp } = useViewModelInstanceNumber(
+        "XP",
         // @ts-ignore
         rive?.viewModelInstance
     );
@@ -75,6 +82,13 @@ export function RiveCharacter({ isActive, isExpanded, mode, mood, layoutMode }: 
             setPose(MOOD_TO_POSE[displayMood]);
         }
     }, [setPose, displayMood]);
+
+    // Sync XP percent ke Rive (jika viewmodel punya property "XP")
+    useEffect(() => {
+        if (setXp) {
+            setXp(xpPercent);
+        }
+    }, [setXp, xpPercent]);
 
     const size = layoutMode === "mini" ? "mini" : isExpanded ? "expanded" : "compact";
 

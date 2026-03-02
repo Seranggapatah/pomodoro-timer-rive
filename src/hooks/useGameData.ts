@@ -2,6 +2,34 @@ import { useCallback } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 import type { GameData, Achievement } from "../types";
 
+// ===== XP SYSTEM CONFIG =====
+// XP yang didapat per sesi fokus (base)
+const BASE_XP_PER_SESSION = 50;
+// Bonus XP per menit fokus (misal 25 menit → +25 xp tambahan)
+const XP_PER_MINUTE = 1;
+// Bonus XP dari streak (per hari streak)
+const XP_STREAK_BONUS = 5;
+// Bonus XP saat complete task
+const XP_PER_TASK = 20;
+
+/**
+ * Hitung XP yang dibutuhkan untuk naik dari level N ke N+1.
+ * Formula makin tinggi level, makin banyak XP yang dibutuhkan.
+ */
+export function xpRequiredForLevel(level: number): number {
+    return 100 + level * 50; // Level 0→1: 100xp, Level 1→2: 150xp, dst
+}
+
+/**
+ * Hitung berapa XP didapat dari satu sesi fokus.
+ */
+export function calcSessionXp(focusMinutes: number, streak: number): number {
+    const base = BASE_XP_PER_SESSION;
+    const minuteBonus = focusMinutes * XP_PER_MINUTE;
+    const streakBonus = streak * XP_STREAK_BONUS;
+    return base + minuteBonus + streakBonus;
+}
+
 /**
  * Daftar achievement yang bisa diraih.
  */
@@ -37,10 +65,42 @@ const DEFAULT_GAME: GameData = {
     totalTasksCompleted: 0,
     level: 0,
     achievements: ACHIEVEMENT_DEFS.map((a) => ({ ...a, unlocked: false })),
+    xp: 0,
+    totalXp: 0,
+    xpToNextLevel: xpRequiredForLevel(0),
 };
 
 /**
- * Hook untuk gamification: streak, level, achievements.
+ * Proses XP: hitung apakah level naik, kembalikan state XP baru.
+ */
+function applyXpGain(
+    currentXp: number,
+    currentLevel: number,
+    currentTotalXp: number,
+    gainedXp: number
+): { xp: number; level: number; totalXp: number; xpToNextLevel: number; levelsGained: number } {
+    let xp = currentXp + gainedXp;
+    let level = currentLevel;
+    let levelsGained = 0;
+
+    // Level-up loop (bisa naik beberapa level sekaligus)
+    while (xp >= xpRequiredForLevel(level)) {
+        xp -= xpRequiredForLevel(level);
+        level += 1;
+        levelsGained += 1;
+    }
+
+    return {
+        xp,
+        level,
+        totalXp: currentTotalXp + gainedXp,
+        xpToNextLevel: xpRequiredForLevel(level),
+        levelsGained,
+    };
+}
+
+/**
+ * Hook untuk gamification: streak, level, achievements, dan XP.
  */
 export function useGameData() {
     const [gameData, setGameData] = useLocalStorage<GameData>("pomodoro-game", DEFAULT_GAME);
@@ -51,26 +111,40 @@ export function useGameData() {
         return existing || { ...def, unlocked: false };
     });
 
-    const recordGameSession = useCallback(() => {
+    // Pastikan XP fields ada (backward compat untuk save lama)
+    const safeXp = gameData.xp ?? 0;
+    const safeTotalXp = gameData.totalXp ?? 0;
+    const safeXpToNextLevel = gameData.xpToNextLevel ?? xpRequiredForLevel(gameData.level ?? 0);
+
+    const recordGameSession = useCallback((focusMinutes: number = 25) => {
         const today = getTodayString();
         const yesterday = getYesterdayString();
 
         setGameData((prev) => {
             const newTotal = prev.totalSessions + 1;
-            const newLevel = Math.floor(newTotal / 10);
 
             // Update streak
             let newStreak = prev.streak;
             if (prev.lastActiveDate === today) {
-                // Sudah record hari ini, streak tetap
                 newStreak = prev.streak;
             } else if (prev.lastActiveDate === yesterday) {
-                // Hari berturut-turut
                 newStreak = prev.streak + 1;
             } else {
-                // Streak reset
                 newStreak = 1;
             }
+
+            // Hitung XP yang didapat sesi ini
+            const gainedXp = calcSessionXp(focusMinutes, newStreak);
+
+            // Apply XP & level-up
+            const xpResult = applyXpGain(
+                prev.xp ?? 0,
+                prev.level,
+                prev.totalXp ?? 0,
+                gainedXp
+            );
+
+            const newLevel = xpResult.level;
 
             // Check achievements
             const newAchievements = ACHIEVEMENT_DEFS.map((def) => {
@@ -102,13 +176,47 @@ export function useGameData() {
                 totalTasksCompleted: prev.totalTasksCompleted || 0,
                 level: newLevel,
                 achievements: newAchievements,
+                xp: xpResult.xp,
+                totalXp: xpResult.totalXp,
+                xpToNextLevel: xpResult.xpToNextLevel,
             };
         });
     }, [setGameData]);
 
     const recordTaskComplete = useCallback(() => {
-        setGameData(prev => ({ ...prev, totalTasksCompleted: (prev.totalTasksCompleted || 0) + 1 }));
+        setGameData(prev => {
+            const gainedXp = XP_PER_TASK;
+            const xpResult = applyXpGain(
+                prev.xp ?? 0,
+                prev.level,
+                prev.totalXp ?? 0,
+                gainedXp
+            );
+
+            // Re-check level achievements
+            const newLevel = xpResult.level;
+            const newAchievements = prev.achievements.map(a => {
+                if (a.unlocked) return a;
+                if (a.id === "level_5" && newLevel >= 5) return { ...a, unlocked: true };
+                if (a.id === "level_10" && newLevel >= 10) return { ...a, unlocked: true };
+                return a;
+            });
+
+            return {
+                ...prev,
+                totalTasksCompleted: (prev.totalTasksCompleted || 0) + 1,
+                level: newLevel,
+                achievements: newAchievements,
+                xp: xpResult.xp,
+                totalXp: xpResult.totalXp,
+                xpToNextLevel: xpResult.xpToNextLevel,
+            };
+        });
     }, [setGameData]);
+
+    const xpPercent = safeXpToNextLevel > 0
+        ? Math.min(100, Math.round((safeXp / safeXpToNextLevel) * 100))
+        : 0;
 
     return {
         streak: gameData.streak,
@@ -118,5 +226,10 @@ export function useGameData() {
         achievements,
         recordGameSession,
         recordTaskComplete,
+        // XP
+        xp: safeXp,
+        totalXp: safeTotalXp,
+        xpToNextLevel: safeXpToNextLevel,
+        xpPercent,
     };
 }

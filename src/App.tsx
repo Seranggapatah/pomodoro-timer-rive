@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 import type { RiveMood, LayoutMode } from "./types";
 import { Play, Pause, X } from "lucide-react";
@@ -30,6 +31,10 @@ import { WeeklyDashboard } from "./components/WeeklyDashboard";
 import { GameStats } from "./components/GameStats";
 import { NotesPanel } from "./components/NotesPanel";
 import { TaskDashboardOverlay } from "./components/TaskDashboardOverlay";
+import { XPDisplay } from "./components/XPDisplay";
+import { TimelineHistory } from "./components/TimelineHistory";
+import { ActivityHeatmap } from "./components/ActivityHeatmap";
+import { HourlyChart } from "./components/HourlyChart";
 
 /**
  * Komponen utama aplikasi Pomodoro Timer.
@@ -46,6 +51,7 @@ function App() {
   const [focusDuration, setFocusDuration] = useLocalStorage("pomodoro-focus-min", 25);
   const [breakDuration, setBreakDuration] = useLocalStorage("pomodoro-break-min", 5);
   const [longBreakDuration, setLongBreakDuration] = useLocalStorage("pomodoro-longbreak-min", 15);
+  const [autoStart, setAutoStart] = useLocalStorage("pomodoro-autostart", false);
 
   // Hooks
   const stats = useStats();
@@ -55,17 +61,41 @@ function App() {
   const tasks = useTasks();
   const notes = useNotes();
   const theme = useTheme();
-  const { minimizeToTray, updateTrayTooltip } = useWindowSize(layoutMode);
+  const { minimizeToTray, updateTrayTimer } = useWindowSize(layoutMode);
 
   const handleTimerComplete = useCallback((completedMode: "focus" | "break") => {
     notifyTimerComplete(completedMode);
+
+    // Cari nama task yang sedang aktif saat ini
+    const currentActiveTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
+    const taskName = currentActiveTask ? currentActiveTask.text : undefined;
+
+    // Record timeline histori
+    stats.recordTimelineLog(
+      completedMode,
+      completedMode === "focus" ? focusDuration : (completedMode === "break" ? breakDuration : longBreakDuration),
+      completedMode === "focus" ? taskName : undefined
+    );
+
     if (completedMode === "focus") {
       stats.recordSession(focusDuration);
       tasks.incrementActiveTaskPomodoro(focusDuration);
-      game.recordGameSession();
+      game.recordGameSession(focusDuration);
       setRiveMood("happy");
     }
-  }, [notifyTimerComplete, stats.recordSession, focusDuration, tasks.incrementActiveTaskPomodoro, game.recordGameSession]);
+  }, [
+    notifyTimerComplete,
+    stats.recordSession,
+    stats.recordTimelineLog,
+    focusDuration,
+    breakDuration,
+    longBreakDuration,
+    tasks.incrementActiveTaskPomodoro,
+    game.recordGameSession,
+    tasks.tasks,
+    tasks.activeTaskId
+  ]);
+
 
   // Timer reset: rive sad
   const handleTimerReset = useCallback(() => {
@@ -81,18 +111,38 @@ function App() {
     tasks.toggleTask(id);
   }, [tasks.tasks, tasks.toggleTask, stats.recordTaskComplete, game.recordTaskComplete]);
 
-  const timer = useTimer(focusDuration, breakDuration, longBreakDuration, handleTimerComplete, handleTimerReset);
+  const timer = useTimer(focusDuration, breakDuration, longBreakDuration, autoStart, handleTimerComplete, handleTimerReset);
 
-  // Update tray tooltip setiap detik dengan countdown
+  // Update tray icon (teks timer) + tooltip setiap detik
   useEffect(() => {
-    const modeLabel = timer.mode === "focus" ? "Focus" : "Break";
-    updateTrayTooltip(`Pomodoro - ${modeLabel}: ${timer.timeString}`);
-  }, [timer.timeString, timer.mode, updateTrayTooltip]);
+    updateTrayTimer(timer.timeString, timer.mode, timer.isActive);
+  }, [timer.timeString, timer.mode, timer.isActive, updateTrayTimer]);
+
+  // Dengarkan event dari tray menu (Start/Pause & Skip)
+  useEffect(() => {
+    let unlistenToggle: (() => void) | undefined;
+    let unlistenSkip: (() => void) | undefined;
+
+    listen("tray-toggle", () => {
+      timer.toggleTimer();
+    }).then((fn) => { unlistenToggle = fn; }).catch(() => { });
+
+    listen("tray-skip", () => {
+      timer.switchMode(timer.mode === "focus" ? "break" : "focus");
+    }).then((fn) => { unlistenSkip = fn; }).catch(() => { });
+
+    return () => {
+      unlistenToggle?.();
+      unlistenSkip?.();
+    };
+  }, [timer.toggleTimer, timer.switchMode, timer.mode]);
 
   // Rive mood logic
   const currentMood: RiveMood = riveMood === "happy" || riveMood === "sad"
     ? riveMood
-    : timer.isActive ? "working" : "idle";
+    : timer.isActive
+      ? (timer.mode === "break" ? "idle" : "working")
+      : "idle";
 
   // Reset mood after timeout
   if (riveMood === "happy" || riveMood === "sad") {
@@ -116,12 +166,12 @@ function App() {
   });
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${timer.mode}`}>
       {layoutMode !== "mini" && (
         <TitleBar
           mode={timer.mode}
-          isExpanded={isExpanded}
-          onToggleExpand={cycleLayout}
+          layoutMode={layoutMode}
+          onSetLayout={setLayoutMode}
         />
       )}
 
@@ -138,8 +188,22 @@ function App() {
               />
             </div>
 
-            <div className={`timer-display mini`} data-tauri-drag-region>
-              {timer.timeString}
+            <div className="mini-timer-block" data-tauri-drag-region>
+              <div className={`timer-display mini`} data-tauri-drag-region>
+                {timer.timeString}
+              </div>
+
+              {/* Active task indicator — mini mode */}
+              {(() => {
+                const activeTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
+                return activeTask ? (
+                  <div className={`mini-active-task ${timer.isActive ? "running" : ""}`}>
+                    <span className="mini-active-task-text" title={activeTask.text}>
+                      {activeTask.text}
+                    </span>
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             <div className="mini-controls-wrapper">
@@ -166,6 +230,19 @@ function App() {
                 onReset={timer.resetTimer}
               />
 
+              {/* Active task indicator — compact only */}
+              {!isExpanded && (() => {
+                const activeTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
+                return activeTask ? (
+                  <div className={`compact-active-task ${timer.isActive ? "running" : ""}`}>
+                    <span className="compact-active-task-prefix">▶</span>
+                    <span className="compact-active-task-text" title={activeTask.text}>
+                      {activeTask.text}
+                    </span>
+                  </div>
+                ) : null;
+              })()}
+
               {/* Expanded-only content */}
               {isExpanded && (
                 <>
@@ -174,6 +251,21 @@ function App() {
                     todayFocusMinutes={stats.todayFocusMinutes}
                     sessionInCycle={timer.sessionInCycle}
                   />
+
+                  {/* Active Task Indicator - Expanded Full size */}
+                  {(() => {
+                    const activeTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
+                    return activeTask ? (
+                      <div className={`expanded-active-task-panel ${timer.isActive ? "running" : ""}`}>
+                        <div className="expanded-active-label">
+                          TARGET_LOCKED <span className="blink-dot"></span>
+                        </div>
+                        <div className="expanded-active-title">
+                          {activeTask.text}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
 
                   <TaskList
                     tasks={tasks.tasks}
@@ -196,9 +288,11 @@ function App() {
                     focusDuration={focusDuration}
                     breakDuration={breakDuration}
                     longBreakDuration={longBreakDuration}
+                    autoStart={autoStart}
                     onFocusDurationChange={setFocusDuration}
                     onBreakDurationChange={setBreakDuration}
                     onLongBreakDurationChange={setLongBreakDuration}
+                    onAutoStartChange={setAutoStart}
                   />
 
                   <div className="bottom-controls">
@@ -229,11 +323,22 @@ function App() {
                 isExpanded={isExpanded}
                 mode={timer.mode}
                 mood={currentMood}
+                xpPercent={game.xpPercent}
               />
 
               {/* Dashboard & Game di bawah Rive saat expanded */}
               {isExpanded && (
                 <div className="right-panels">
+                  <XPDisplay
+                    level={game.level}
+                    xp={game.xp}
+                    xpToNextLevel={game.xpToNextLevel}
+                    xpPercent={game.xpPercent}
+                    totalXp={game.totalXp}
+                  />
+                  <TimelineHistory logs={stats.logs} />
+                  <HourlyChart hourlyData={stats.hourlyProductivity} />
+                  <ActivityHeatmap days={stats.heatmap90} />
                   <WeeklyDashboard last7Days={stats.last7Days} />
                   <GameStats
                     streak={game.streak}
@@ -263,6 +368,8 @@ function App() {
           onToggleSubTask={tasks.toggleSubTask}
           onDeleteSubTask={tasks.deleteSubTask}
           onEditSubTask={tasks.editSubTask}
+          onAddTag={tasks.addTagToTask}
+          onRemoveTag={tasks.removeTagFromTask}
         />
       )}
     </div>

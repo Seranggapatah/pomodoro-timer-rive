@@ -56,5 +56,25 @@ export function useWindowSize(layout: LayoutMode) {
         }
     }, []);
 
-    return { minimizeToTray, updateTrayTooltip };
+    /**
+     * Update tray icon dengan timer string + mode & status aktif.
+     * Icon akan menampilkan teks "MM:SS" langsung di menu bar.
+     */
+    const updateTrayTimer = useCallback(async (
+        timeString: string,
+        mode: string,
+        isActive: boolean
+    ) => {
+        try {
+            await invoke("update_tray_timer", {
+                timeString,
+                mode,
+                isActive,
+            });
+        } catch {
+            // Diabaikan jika tidak di Tauri
+        }
+    }, []);
+
+    return { minimizeToTray, updateTrayTooltip, updateTrayTimer };
 }

@@ -135,6 +135,24 @@ export function useTasks() {
         }));
     };
 
+    const addTagToTask = (taskId: string, tag: string) => {
+        const trimTag = tag.trim().toLowerCase();
+        if (!trimTag) return;
+        setTasks(tasks.map(task => {
+            if (task.id !== taskId) return task;
+            const existing = task.tags || [];
+            if (existing.includes(trimTag)) return task;
+            return { ...task, tags: [...existing, trimTag] };
+        }));
+    };
+
+    const removeTagFromTask = (taskId: string, tag: string) => {
+        setTasks(tasks.map(task => {
+            if (task.id !== taskId) return task;
+            return { ...task, tags: (task.tags || []).filter(t => t !== tag) };
+        }));
+    };
+
     return {
         tasks,
         newTaskText,
@@ -153,5 +171,7 @@ export function useTasks() {
         toggleSubTask,
         deleteSubTask,
         editSubTask,
+        addTagToTask,
+        removeTagFromTask,
     };
 }
