@@ -36,6 +36,33 @@ export function useTimer(
         }
     }, [focusDuration, breakDuration, longBreakDuration]);
 
+    // Handle ketika durasi habis atau diskip manual sebagai "selesai"
+    const completeSession = useCallback(() => {
+        const completedMode = mode;
+
+        if (!autoStart) {
+            setIsActive(false);
+        }
+
+        if (mode === "focus") {
+            const newCount = sessionCount + 1;
+            setSessionCount(newCount);
+
+            if (newCount % 4 === 0) {
+                setMode("break");
+                setTimeLeft(longBreakSeconds);
+            } else {
+                setMode("break");
+                setTimeLeft(breakSeconds);
+            }
+        } else {
+            setMode("focus");
+            setTimeLeft(focusSeconds);
+        }
+
+        onTimerComplete?.(completedMode);
+    }, [mode, autoStart, sessionCount, longBreakSeconds, breakSeconds, focusSeconds, onTimerComplete]);
+
     // Countdown logic
     useEffect(() => {
         let interval: ReturnType<typeof setInterval> | null = null;
@@ -45,38 +72,13 @@ export function useTimer(
                 setTimeLeft((prev) => prev - 1);
             }, 1000);
         } else if (isActive && timeLeft === 0) {
-            // Timer habis
-            const completedMode = mode;
-
-            // Apakah otomatis lanjut run atau stop?
-            if (!autoStart) {
-                setIsActive(false);
-            }
-
-            if (mode === "focus") {
-                const newCount = sessionCount + 1;
-                setSessionCount(newCount);
-
-                // Setelah 4 focus session → long break, lalu reset counter
-                if (newCount % 4 === 0) {
-                    setMode("break");
-                    setTimeLeft(longBreakSeconds);
-                } else {
-                    setMode("break");
-                    setTimeLeft(breakSeconds);
-                }
-            } else {
-                setMode("focus");
-                setTimeLeft(focusSeconds);
-            }
-
-            onTimerComplete?.(completedMode);
+            completeSession();
         }
 
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [isActive, timeLeft, mode, focusSeconds, breakSeconds, longBreakSeconds, sessionCount, autoStart, onTimerComplete]);
+    }, [isActive, timeLeft, completeSession]);
 
     const toggleTimer = useCallback(() => setIsActive((prev) => !prev), []);
 
@@ -112,5 +114,6 @@ export function useTimer(
         toggleTimer,
         resetTimer,
         switchMode,
+        completeSession,
     };
 }

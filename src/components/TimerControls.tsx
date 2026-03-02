@@ -1,4 +1,4 @@
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Play, Pause, RotateCcw, SkipForward } from "lucide-react";
 import type { LayoutMode } from "../types";
 
 interface TimerControlsProps {
@@ -6,12 +6,13 @@ interface TimerControlsProps {
     layout: LayoutMode;
     onToggle: () => void;
     onReset: () => void;
+    onComplete?: () => void;
 }
 
 /**
  * Tombol Play/Pause dan Reset untuk mengontrol timer.
  */
-export function TimerControls({ isActive, layout, onToggle, onReset }: TimerControlsProps) {
+export function TimerControls({ isActive, layout, onToggle, onReset, onComplete }: TimerControlsProps) {
     const isExpanded = layout === "expanded";
     const isMini = layout === "mini";
     const iconSize = isExpanded ? 28 : (isMini ? 14 : 16);
@@ -29,13 +30,22 @@ export function TimerControls({ isActive, layout, onToggle, onReset }: TimerCont
                 }
             </button>
 
-            {/* Tombol Reset */}
+            {/* Tombol Rest */}
             <button
                 onClick={onReset}
                 className={`btn-reset ${layout}`}
                 title="Reset timer"
             >
                 <RotateCcw size={iconSize} />
+            </button>
+
+            {/* Tombol Done / Fast Forward */}
+            <button
+                onClick={onComplete}
+                className={`btn-done ${layout}`}
+                title="Selesaikan sesi sekarang (Skip)"
+            >
+                <SkipForward size={iconSize} />
             </button>
         </div>
     );

@@ -228,6 +228,7 @@ function App() {
                 layout={layoutMode}
                 onToggle={timer.toggleTimer}
                 onReset={timer.resetTimer}
+                onComplete={timer.completeSession}
               />
 
               {/* Active task indicator — compact only */}

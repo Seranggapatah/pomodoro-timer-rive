@@ -380,19 +380,44 @@ body,
   transform: rotate(-45deg);
 }
 
-.btn-reset.mini {
+.btn-reset.mini,
+.btn-done.mini {
   width: 20px;
   height: 20px;
 }
 
-.btn-reset.compact {
+.btn-reset.compact,
+.btn-done.compact {
   width: 32px;
   height: 32px;
 }
 
-.btn-reset.expanded {
+.btn-reset.expanded,
+.btn-done.expanded {
   width: 44px;
   height: 44px;
+}
+
+/* --- Done Button --- */
+.btn-done {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-done:hover {
+  color: var(--accent-success);
+  border-color: var(--accent-success);
+}
+
+.app-container.break .btn-done:hover {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
 }
 
 /* ===== TASK LIST ===== */
