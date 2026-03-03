@@ -65,6 +65,38 @@ body,
   position: relative;
 }
 
+/* ASCII Corner Decorations — terminal window aesthetic */
+.app-container::before {
+  content: '┌─';
+  position: absolute;
+  /* below titlebar (36px) + 1px border */
+  top: 37px;
+  left: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+  letter-spacing: -0.1em;
+  line-height: 1;
+}
+
+.app-container::after {
+  content: '─┘';
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+  letter-spacing: -0.1em;
+  line-height: 1;
+}
+
 /* ===== TITLE BAR / DRAG REGION ===== */
 .titlebar {
   height: 36px;
@@ -235,6 +267,11 @@ body,
   gap: 8px;
 }
 
+/* Rapat saat break mode di compact */
+.app-container.break .left-column.compact {
+  gap: 4px;
+}
+
 .left-column.mini {
   gap: 4px;
   align-items: center;
@@ -274,10 +311,23 @@ body,
   font-size: 40px;
 }
 
+/* Timer mengecil saat break di compact mode */
+.app-container.break .timer-display.compact {
+  font-size: 22px;
+}
+
+
 .timer-display.expanded {
   font-size: 72px;
   margin-bottom: 4px;
 }
+
+/* Timer display jadi lebih kecil saat break di expanded mode */
+.app-container.break .timer-display.expanded {
+  font-size: 44px;
+  margin-bottom: 2px;
+}
+
 
 /* Blinking cursor setelah timer */
 .timer-display::after {

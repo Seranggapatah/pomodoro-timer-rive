@@ -16,6 +16,7 @@ import { useStats } from "./hooks/useStats";
 import { useAmbientSound } from "./hooks/useAmbientSound";
 import { useGameData } from "./hooks/useGameData";
 import { useNotes } from "./hooks/useNotes";
+import { useReminders } from "./hooks/useReminders";
 
 // Components
 import { TitleBar } from "./components/TitleBar";
@@ -37,6 +38,9 @@ import { XPDisplay } from "./components/XPDisplay";
 import { TimelineHistory } from "./components/TimelineHistory";
 import { ActivityHeatmap } from "./components/ActivityHeatmap";
 import { HourlyChart } from "./components/HourlyChart";
+import { BreakOverlay } from "./components/BreakOverlay";
+import { RemindersPanel } from "./components/RemindersPanel";
+import { ReminderAlert } from "./components/ReminderAlert";
 
 /**
  * Komponen utama aplikasi Pomodoro Timer.
@@ -76,6 +80,7 @@ function App() {
   const { notifyTimerComplete } = useNotification();
   const tasks = useTasks();
   const notes = useNotes();
+  const reminders = useReminders();
   const theme = useTheme();
   const { minimizeToTray, updateTrayTimer } = useWindowSize(layoutMode);
 
@@ -187,6 +192,7 @@ function App() {
         <TitleBar
           mode={timer.mode}
           layoutMode={layoutMode}
+          isActive={timer.isActive}
           onSetLayout={setLayoutMode}
         />
       )}
@@ -206,23 +212,35 @@ function App() {
             </div>
 
             <div className="mini-timer-block" data-tauri-drag-region>
-              <div className={`timer-display mini`} data-tauri-drag-region>
+              <div className={`timer-display mini${!timer.isActive ? " idle" : ""}${currentMood === "happy" ? " session-done" : ""}`} data-tauri-drag-region>
                 {timer.timeString}
                 <span className={`timer-ms mini ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
               </div>
 
-              {/* Active task indicator — mini mode */}
-              {(() => {
-                const activeTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
-                return activeTask ? (
-                  <div className={`mini-active-task ${timer.isActive ? "running" : ""}`}>
-                    <div className="blink-dot" />
-                    <span className="mini-active-task-text" title={activeTask.text}>
-                      {activeTask.text}
-                    </span>
+              {/* Active task indicator / break bar — mini mode */}
+              {timer.mode === "break" ? (() => {
+                const progress = timer.totalModeMs > 0 ? (1 - timer.msLeft / timer.totalModeMs) : 0;
+                const barW = 8;
+                const filled = Math.floor(progress * barW);
+                const bar = "█".repeat(filled) + "░".repeat(barW - filled);
+                return (
+                  <div className="mini-break-block">
+                    <span className="mini-break-bar">[{bar}]</span>
                   </div>
-                ) : null;
-              })()}
+                );
+              })() : (
+                (() => {
+                  const activeTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
+                  return activeTask ? (
+                    <div className={`mini-active-task ${timer.isActive ? "running" : ""}`}>
+                      <div className="blink-dot" />
+                      <span className="mini-active-task-text" title={activeTask.text}>
+                        {activeTask.text}
+                      </span>
+                    </div>
+                  ) : null;
+                })()
+              )}
             </div>
 
             <div className="mini-controls-wrapper">
@@ -238,10 +256,21 @@ function App() {
           <>
             {/* Kolom Kiri */}
             <div className={`left-column ${layoutMode}`}>
-              <div className={`timer-display ${layoutMode}`}>
+              <div className={`timer-display ${layoutMode}${!timer.isActive ? " idle" : ""}${currentMood === "happy" ? " session-done" : ""}`}>
                 {timer.timeString}
                 <span className={`timer-ms ${layoutMode} ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
               </div>
+
+              {/* Break overlay — expanded mode, langsung di bawah angka timer */}
+              {isExpanded && timer.mode === "break" && (
+                <BreakOverlay
+                  msLeft={timer.msLeft}
+                  totalMs={timer.totalModeMs}
+                  timeString={timer.timeString}
+                  isActive={timer.isActive}
+                  layout={layoutMode}
+                />
+              )}
 
               <TimerControls
                 isActive={timer.isActive}
@@ -263,6 +292,17 @@ function App() {
                   </div>
                 ) : null;
               })()}
+
+              {/* Break overlay — compact mode only */}
+              {!isExpanded && timer.mode === "break" && (
+                <BreakOverlay
+                  msLeft={timer.msLeft}
+                  totalMs={timer.totalModeMs}
+                  timeString={timer.timeString}
+                  isActive={timer.isActive}
+                  layout={layoutMode}
+                />
+              )}
 
               {/* Expanded-only content */}
               {isExpanded && (
@@ -303,6 +343,13 @@ function App() {
                   <NotesPanel
                     note={notes.note}
                     onNoteChange={notes.setNote}
+                  />
+
+                  <RemindersPanel
+                    reminders={reminders.reminders}
+                    onAdd={reminders.addReminder}
+                    onDelete={reminders.deleteReminder}
+                    onClearTriggered={reminders.clearTriggered}
                   />
 
                   <SettingsPanel
@@ -398,6 +445,11 @@ function App() {
           onRemoveTag={tasks.removeTagFromTask}
         />
       )}
+      {/* In-app reminder alert — fixed overlay, dismiss dengan [×] */}
+      <ReminderAlert
+        alerts={reminders.alerts}
+        onDismiss={reminders.dismissAlert}
+      />
     </div>
   );
 }

@@ -1,17 +1,21 @@
+import { useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Mode, LayoutMode } from "../types";
 
 interface TitleBarProps {
     mode: Mode;
     layoutMode: LayoutMode;
+    isActive: boolean;
     onSetLayout: (mode: LayoutMode) => void;
 }
 
 /**
- * Title bar terminal-style: menampilkan mode dan 3 tombol layout (mini, compact, expand).
- * Berfungsi juga sebagai drag region untuk menggeser window.
+ * Title bar terminal-style: label kiri, status tengah, layout buttons kanan.
+ * Status indicator blink saat timer running — semua dalam satu baris.
  */
-export function TitleBar({ mode, layoutMode, onSetLayout }: TitleBarProps) {
+export function TitleBar({ mode, layoutMode, isActive, onSetLayout }: TitleBarProps) {
+    const pidRef = useRef(4096 + Math.floor(Math.random() * 9000));
+
     const handleDrag = (e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest("button")) return;
         if (e.button === 0) {
@@ -24,14 +28,22 @@ export function TitleBar({ mode, layoutMode, onSetLayout }: TitleBarProps) {
     };
 
     return (
-        <div
-            className="titlebar"
-            data-tauri-drag-region
-            onMouseDown={handleDrag}
-        >
+        <div className="titlebar" data-tauri-drag-region onMouseDown={handleDrag}>
             <span className="titlebar-label">
                 {mode === "focus" ? "focus_session" : "break_time"}
             </span>
+
+            {/* Status inline di tengah titlebar */}
+            <div className={`titlebar-status${isActive ? " running" : ""}`}>
+                <span className={`status-indicator${isActive ? " running" : ""}`}>
+                    {isActive ? "●" : "○"}
+                </span>
+                <span className="status-text">
+                    {isActive ? "process_running" : "awaiting_input"}
+                </span>
+                <span className="status-sep">·</span>
+                <span className="status-pid">pid:{pidRef.current}</span>
+            </div>
 
             <div className="titlebar-controls" onMouseDown={(e) => e.stopPropagation()}>
                 <button

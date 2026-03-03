@@ -179,6 +179,10 @@ export function useTimer(
     return {
         timeString,
         msString,
+        msLeft,
+        totalModeMs: mode === "focus"
+            ? focusMs
+            : (sessionCount > 0 && sessionCount % 4 === 0 ? longBreakMs : breakMs),
         isActive,
         mode,
         sessionCount,

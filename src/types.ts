@@ -126,3 +126,14 @@ export interface Achievement {
     description: string;
     unlocked: boolean;
 }
+
+/**
+ * Reminder — task dengan jam notifikasi.
+ */
+export interface Reminder {
+    id: string;
+    text: string;
+    time: string;       // "HH:MM"
+    triggered: boolean;
+    createdAt: number;
+}

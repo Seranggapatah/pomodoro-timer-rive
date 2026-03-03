@@ -25,7 +25,46 @@
 
 /* Timer Display */
 .timer-display {
-    transition: color 0.5s, text-shadow 0.5s;
+    transition: color 0.6s ease, text-shadow 0.6s ease, opacity 0.6s ease;
+}
+
+/* ── Idle: redupkan jam saat timer tidak berjalan ── */
+.timer-display.idle {
+    opacity: 0.35;
+    color: var(--text-dim);
+    text-shadow: none;
+    animation: idle-breathe 3.5s ease-in-out infinite;
+}
+
+@keyframes idle-breathe {
+
+    0%,
+    100% {
+        opacity: 0.35;
+    }
+
+    50% {
+        opacity: 0.55;
+    }
+}
+
+/* Idle state on break mode */
+.app-container.break .timer-display.idle {
+    color: var(--accent-break);
+    opacity: 0.3;
+    animation: idle-breathe-break 3.5s ease-in-out infinite;
+}
+
+@keyframes idle-breathe-break {
+
+    0%,
+    100% {
+        opacity: 0.30;
+    }
+
+    50% {
+        opacity: 0.50;
+    }
 }
 
 .app-container.break .timer-display {
@@ -33,15 +72,7 @@
     text-shadow: 0 0 12px var(--border-glow);
 }
 
-.app-container.break .timer-display:not(.mini)::before {
-    content: '▶ COFFEE_BREAK';
-    display: block;
-    font-size: 14px;
-    letter-spacing: 0.15em;
-    opacity: 0.8;
-    margin-bottom: -5px;
-    animation: pulse-break 2s infinite alternate;
-}
+
 
 @keyframes pulse-break {
     0% {
@@ -57,6 +88,67 @@
 
 .timer-display::after {
     color: inherit !important;
+}
+
+/* ── Cursor blink speed: lebih cepat saat running, lambat saat idle ── */
+.timer-display:not(.idle)::after {
+    animation-duration: 0.45s;
+}
+
+.timer-display.idle::after {
+    animation-duration: 1.5s;
+}
+
+/* ── Glitch effect saat sesi selesai (mood: happy) ── */
+@keyframes timer-glitch {
+    0% {
+        text-shadow: inherit;
+        transform: translate(0);
+        opacity: 1;
+    }
+
+    10% {
+        text-shadow: -2px 0 #ff3333, 2px 0 var(--accent-break);
+        transform: translate(-2px, 0);
+    }
+
+    22% {
+        text-shadow: 2px 0 #ff3333, -2px 0 var(--accent-break);
+        transform: translate(2px, 0);
+        opacity: 0.85;
+    }
+
+    35% {
+        text-shadow: -1px 0 currentColor;
+        transform: translate(-1px, 0);
+        opacity: 1;
+    }
+
+    48% {
+        text-shadow: 1px 0 var(--accent-focus);
+        transform: translate(1px, 0);
+    }
+
+    62% {
+        text-shadow: inherit;
+        transform: translate(0);
+        opacity: 0.9;
+    }
+
+    78% {
+        text-shadow: -1px 0 #ff3333;
+        transform: translate(-1px, 0);
+    }
+
+    100% {
+        text-shadow: inherit;
+        transform: translate(0);
+        opacity: 1;
+    }
+}
+
+.timer-display.session-done {
+    animation: timer-glitch 0.55s steps(1, end) forwards !important;
 }
 
 /* Settings Toggle */
@@ -837,4 +929,498 @@
     gap: 4px;
     margin-top: 4px;
     font-size: 12px;
+}
+
+/* ===== TITLEBAR STATUS (inline, tengah titlebar) ===== */
+.titlebar-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    flex: 1;
+    justify-content: center;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+    transition: color 0.4s ease;
+}
+
+.titlebar-status .status-indicator {
+    font-size: 7px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.titlebar-status .status-indicator.running {
+    color: var(--accent-focus);
+    animation: blink-indicator 0.9s step-end infinite;
+}
+
+@keyframes blink-indicator {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.15;
+    }
+}
+
+.titlebar-status .status-text {
+    white-space: nowrap;
+    transition: color 0.4s ease;
+}
+
+.titlebar-status.running .status-text {
+    color: var(--text-dim);
+}
+
+.titlebar-status .status-sep {
+    opacity: 0.35;
+}
+
+.titlebar-status .status-pid {
+    flex-shrink: 0;
+    opacity: 0.4;
+    font-size: 8px;
+}
+
+/* Break mode tint */
+.app-container.break .titlebar-status.running .status-indicator {
+    color: var(--accent-break);
+}
+
+.app-container.break .titlebar-status.running .status-text {
+    color: color-mix(in srgb, var(--accent-break) 50%, var(--text-muted));
+}
+
+/* ===== BREAK OVERLAY ===== */
+.break-overlay {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    animation: break-enter 0.4s ease forwards;
+}
+
+@keyframes break-enter {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.break-header {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--accent-break);
+    animation: pulse-break 2s alternate infinite;
+}
+
+.break-art {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.5;
+    letter-spacing: 0;
+    white-space: pre;
+    user-select: none;
+    transition: color 0.5s ease;
+}
+
+.break-overlay.active .break-art {
+    color: color-mix(in srgb, var(--accent-break) 35%, var(--text-muted));
+}
+
+.break-overlay.expanded .break-art {
+    font-size: 10.5px;
+}
+
+.break-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.break-bar {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0;
+    transition: color 0.4s ease;
+}
+
+.break-overlay.active .break-bar {
+    color: var(--accent-break);
+}
+
+.break-time {
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.break-flavor {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    animation: break-flavor-in 0.6s ease;
+    min-height: 14px;
+}
+
+@keyframes break-flavor-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ===== MINI MODE BREAK BAR (character-based) ===== */
+.mini-break-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 75px;
+}
+
+.mini-break-bar {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: var(--accent-break);
+    letter-spacing: 0;
+    user-select: none;
+    opacity: 0.85;
+}
+
+/* Compact mode — BreakOverlay lebih kecil & rapat */
+.break-overlay:not(.expanded) {
+    margin-top: 2px;
+    padding: 4px 6px;
+    border: 1px dashed var(--border-color);
+    background-color: var(--bg-secondary);
+    gap: 2px;
+}
+
+.break-overlay.active:not(.expanded) {
+    border-color: color-mix(in srgb, var(--accent-break) 40%, transparent);
+}
+
+.break-overlay:not(.expanded) .break-bar {
+    font-size: 8px;
+    letter-spacing: -0.02em;
+}
+
+.break-overlay:not(.expanded) .break-time {
+    font-size: 8px;
+}
+
+.break-overlay:not(.expanded) .break-progress {
+    gap: 5px;
+}
+
+/* Expanded mode — breathing room */
+.break-overlay.expanded {
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-color);
+    margin-bottom: 4px;
+}
+
+/* ===== REMINDER ALERT (in-app fixed overlay) ===== */
+.reminder-alerts-stack {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 200;
+    pointer-events: none;
+}
+
+.reminder-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--accent-focus);
+    box-shadow: 0 0 16px rgba(255, 102, 0, 0.2), inset 0 0 8px rgba(255, 102, 0, 0.05);
+    animation: alert-slide-in 0.3s ease forwards;
+    pointer-events: all;
+}
+
+@keyframes alert-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.reminder-alert-icon {
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--accent-focus);
+    animation: alert-pulse 0.8s step-end infinite;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+@keyframes alert-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+.reminder-alert-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+}
+
+.reminder-alert-label {
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--accent-focus);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.reminder-alert-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reminder-alert-time {
+    font-size: 8px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.reminder-alert-dismiss {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 2px 5px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+
+.reminder-alert-dismiss:hover {
+    color: var(--accent-danger);
+    border-color: var(--accent-danger);
+}
+
+/* ===== REMINDERS PANEL ===== */
+.reminders-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    padding: 10px 12px;
+}
+
+.reminders-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+}
+
+.reminders-form {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.reminders-text-input {
+    flex: 1;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    padding: 4px 8px;
+    font-size: 11px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    outline: none;
+    min-width: 0;
+}
+
+.reminders-text-input::placeholder {
+    color: var(--text-muted);
+}
+
+.reminders-text-input:focus {
+    border-color: var(--text-dim);
+}
+
+.reminders-time-input {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    padding: 4px 6px;
+    font-size: 11px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    outline: none;
+    width: 80px;
+    color-scheme: dark;
+}
+
+.reminders-time-input:focus {
+    border-color: var(--text-dim);
+}
+
+.reminders-add-btn {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-dim);
+    padding: 4px 8px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+
+.reminders-add-btn:hover:not(:disabled) {
+    color: var(--text-primary);
+    border-color: var(--text-dim);
+}
+
+.reminders-add-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.reminders-empty {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 4px 0;
+}
+
+.reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.triggered-list {
+    opacity: 0.55;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 4px;
+}
+
+.reminder-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+}
+
+.reminder-item-status {
+    flex-shrink: 0;
+    font-size: 10px;
+}
+
+.reminder-item-status.pending {
+    color: var(--accent-focus);
+}
+
+.reminder-item-status.done {
+    color: var(--text-muted);
+}
+
+.reminder-item-time {
+    color: var(--text-dim);
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.reminder-item-text {
+    flex: 1;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reminder-item.triggered .reminder-item-text {
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.reminder-item-delete {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+}
+
+.reminder-item:hover .reminder-item-delete {
+    opacity: 1;
+}
+
+.reminder-item-delete:hover {
+    color: var(--accent-danger);
+}
+
+.reminders-clear-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    cursor: pointer;
+    padding: 2px 0;
+    margin-top: 2px;
+    text-align: left;
+}
+
+.reminders-clear-btn:hover {
+    color: var(--text-dim);
 }
