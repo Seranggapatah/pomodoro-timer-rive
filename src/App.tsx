@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 import type { RiveMood, LayoutMode } from "./types";
-import { Play, Pause, X } from "lucide-react";
+import { Clock, Maximize2 } from "lucide-react";
 
 // Hooks
 import { useLocalStorage } from "./hooks/useLocalStorage";
@@ -54,6 +54,7 @@ function App() {
   const isExpanded = layoutMode === "expanded";
   const [riveMood, setRiveMood] = useState<RiveMood>("idle");
   const [isTaskDashboardOpen, setIsTaskDashboardOpen] = useState(false);
+  const [showTracker, setShowTracker] = useLocalStorage("pomodoro-show-tracker", false);
 
   // ASCII filter — single settings object
   const [ascii, setAscii] = useState<AsciiSettings>({
@@ -205,6 +206,13 @@ function App() {
       <div className={`main-content ${layoutMode}`} data-tauri-drag-region>
         {layoutMode === "mini" ? (
           <div className="mini-mode-row" data-tauri-drag-region>
+            <button
+              className="mini-expand-btn"
+              onClick={cycleLayout}
+              title="Expand Mode"
+            >
+              <Maximize2 size={12} />
+            </button>
             <div className="mini-rive-wrapper" data-tauri-drag-region>
               <RiveCharacter
                 isActive={timer.isActive}
@@ -221,6 +229,15 @@ function App() {
                 {timer.timeString}
                 <span className={`timer-ms mini ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
               </div>
+
+              {/* SlabPixel Tracker - Mini mode */}
+              {showTracker && (
+                <div className="mini-tracker-display" title="SlabPixel Tracker Timer">
+                  <Clock size={10} style={{ marginRight: 4 }} />
+                  {slabPixel.isLoading && !slabPixel.trackerTime ? "loading..." : (slabPixel.trackerTime || "—")}
+                  {slabPixel.paused && !slabPixel.stopped && slabPixel.trackerTime ? " [P]" : ""}
+                </div>
+              )}
 
               {/* Active task indicator / break bar — mini mode */}
               {timer.mode === "break" ? (() => {
@@ -248,14 +265,6 @@ function App() {
               )}
             </div>
 
-            <div className="mini-controls-wrapper">
-              <button className="mini-action-btn" onClick={timer.toggleTimer} title="Play/Pause">
-                {timer.isActive ? <Pause size={14} /> : <Play size={14} />}
-              </button>
-              <button className="mini-action-btn close" onClick={cycleLayout} title="Exit mini mode">
-                <X size={14} />
-              </button>
-            </div>
           </div>
         ) : (
           <>
@@ -265,6 +274,15 @@ function App() {
                 {timer.timeString}
                 <span className={`timer-ms ${layoutMode} ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
               </div>
+
+              {/* SlabPixel Tracker - Compact mode */}
+              {showTracker && !isExpanded && (
+                <div className="compact-tracker-display" title="SlabPixel Tracker Timer">
+                  <Clock size={12} style={{ marginRight: 6 }} />
+                  {slabPixel.isLoading && !slabPixel.trackerTime ? "loading..." : (slabPixel.trackerTime || "—")}
+                  {slabPixel.paused && !slabPixel.stopped && slabPixel.trackerTime ? " (Paused)" : ""}
+                </div>
+              )}
 
               {/* Break overlay — expanded mode, langsung di bawah angka timer */}
               {isExpanded && timer.mode === "break" && (
@@ -414,7 +432,11 @@ function App() {
                     xpPercent={game.xpPercent}
                     totalXp={game.totalXp}
                   />
-                  <SlabPixelWidget data={slabPixel} />
+                  <SlabPixelWidget
+                    data={slabPixel}
+                    showTracker={showTracker}
+                    onToggleTracker={() => setShowTracker((p: boolean) => !p)}
+                  />
                   <TimelineHistory logs={stats.logs} />
                   <HourlyChart hourlyData={stats.hourlyProductivity} />
                   <ActivityHeatmap days={stats.heatmap90} />

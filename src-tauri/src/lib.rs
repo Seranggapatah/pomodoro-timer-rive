@@ -100,7 +100,7 @@ async fn fetch_tracker_data(app: tauri::AppHandle) -> Result<(), String> {
             tauri::WebviewUrl::External(URL.parse().unwrap()),
         )
         .title("SlabPixel Tracker")
-        .visible(true)
+        .visible(false)
         .inner_size(1200.0, 800.0)
         .on_navigation(move |url| {
             let url_str = url.to_string();

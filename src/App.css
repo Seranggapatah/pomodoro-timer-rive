@@ -155,6 +155,12 @@ body,
   background-color: var(--bg-tertiary);
 }
 
+.titlebar-btn.active {
+  color: var(--text-primary);
+  font-weight: 700;
+  border-color: var(--text-primary);
+}
+
 /* ===== MAIN CONTENT ===== */
 .main-content {
   flex: 1;
@@ -211,6 +217,30 @@ body,
   height: 100%;
   padding: 0 12px;
   gap: 16px;
+  position: relative;
+}
+
+.mini-expand-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  z-index: 50;
+}
+
+.mini-expand-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
 }
 
 .mini-rive-wrapper {
@@ -249,6 +279,11 @@ body,
 
 .mini-action-btn:hover {
   background-color: var(--border-color);
+}
+
+.mini-action-btn.active {
+  color: var(--accent-break);
+  border-color: var(--accent-break);
 }
 
 .mini-action-btn.close:hover {
@@ -376,6 +411,34 @@ body,
 
 .timer-ms.expanded {
   font-size: 36px;
+}
+
+/* ===== SECONDARY TRACKER DISPLAY ===== */
+.mini-tracker-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 10px;
+  color: var(--accent-break);
+  font-weight: 600;
+  margin-top: -4px;
+}
+
+.compact-tracker-display {
+  display: flex;
+  align-items: center;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--accent-break);
+  font-weight: 600;
+  margin-top: -6px;
+  margin-bottom: 4px;
+}
+
+.app-container.break .mini-tracker-display,
+.app-container.break .compact-tracker-display {
+  color: var(--text-dim);
 }
 
 
@@ -2201,6 +2264,11 @@ body,
   gap: 6px;
 }
 
+.slabpixel-widget.active {
+  border-color: var(--accent-focus);
+  background-color: rgba(255, 102, 0, 0.05);
+}
+
 .slabpixel-header {
   display: flex;
   align-items: center;
@@ -2236,6 +2304,11 @@ body,
 .slabpixel-btn:hover:not(:disabled) {
   color: var(--text-primary);
   border-color: var(--text-dim);
+}
+
+.slabpixel-btn.active {
+  color: var(--accent-focus);
+  border-color: var(--accent-focus);
 }
 
 .slabpixel-btn:disabled {

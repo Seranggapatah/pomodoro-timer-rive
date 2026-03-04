@@ -4,9 +4,11 @@ import type { SlabPixelData } from "../hooks/useSlabPixelTracker";
 
 interface SlabPixelWidgetProps {
     data: SlabPixelData;
+    showTracker?: boolean;
+    onToggleTracker?: () => void;
 }
 
-export function SlabPixelWidget({ data }: SlabPixelWidgetProps) {
+export function SlabPixelWidget({ data, showTracker, onToggleTracker }: SlabPixelWidgetProps) {
     const {
         trackerTime, paused, stopped, isLoading, error,
         refresh, startTimer, pauseTimer, initiateStop, confirmStop, cancelStop,
@@ -41,7 +43,7 @@ export function SlabPixelWidget({ data }: SlabPixelWidgetProps) {
     };
 
     return (
-        <div className="slabpixel-widget">
+        <div className={`slabpixel-widget ${showTracker ? "active" : ""}`}>
             {/* Header */}
             <div className="slabpixel-header">
                 <span className="slabpixel-label">
@@ -49,6 +51,16 @@ export function SlabPixelWidget({ data }: SlabPixelWidgetProps) {
                     TIME TRACKER
                 </span>
                 <div className="slabpixel-actions">
+                    {onToggleTracker && (
+                        <button
+                            className={`slabpixel-btn ${showTracker ? "active" : ""}`}
+                            onClick={onToggleTracker}
+                            title="Toggle Inline Tracker"
+                            style={{ fontFamily: "monospace", fontSize: "10px", lineHeight: 1 }}
+                        >
+                            [trk]
+                        </button>
+                    )}
                     <button
                         className="slabpixel-btn"
                         onClick={refresh}
