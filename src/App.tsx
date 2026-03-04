@@ -41,6 +41,8 @@ import { HourlyChart } from "./components/HourlyChart";
 import { BreakOverlay } from "./components/BreakOverlay";
 import { RemindersPanel } from "./components/RemindersPanel";
 import { ReminderAlert } from "./components/ReminderAlert";
+import { SlabPixelWidget } from "./components/SlabPixelWidget";
+import { useSlabPixelTracker } from "./hooks/useSlabPixelTracker";
 
 /**
  * Komponen utama aplikasi Pomodoro Timer.
@@ -133,6 +135,9 @@ function App() {
   }, [tasks.tasks, tasks.toggleTask, stats.recordTaskComplete, game.recordTaskComplete]);
 
   const timer = useTimer(focusDuration, breakDuration, longBreakDuration, autoStart, handleTimerComplete, handleTimerReset);
+
+  // SlabPixel time tracker scraper
+  const slabPixel = useSlabPixelTracker();
 
   // Update tray icon (teks timer) + tooltip setiap detik
   useEffect(() => {
@@ -409,6 +414,7 @@ function App() {
                     xpPercent={game.xpPercent}
                     totalXp={game.totalXp}
                   />
+                  <SlabPixelWidget data={slabPixel} />
                   <TimelineHistory logs={stats.logs} />
                   <HourlyChart hourlyData={stats.hourlyProductivity} />
                   <ActivityHeatmap days={stats.heatmap90} />
