@@ -296,6 +296,7 @@ body,
   display: flex;
   flex-direction: column;
   z-index: 20;
+  flex-shrink: 0;
 }
 
 .left-column.compact {
@@ -417,7 +418,6 @@ body,
 .mini-tracker-display {
   display: flex;
   align-items: center;
-  justify-content: center;
   font-family: inherit;
   font-size: 10px;
   color: var(--accent-break);

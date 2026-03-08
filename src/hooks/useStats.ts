@@ -114,7 +114,7 @@ export function useStats() {
     const recordTimelineLog = useCallback((type: "focus" | "break", durationMinutes: number, taskName?: string) => {
         setLogs(prev => {
             const newLog: TimelineLog = {
-                id: Date.now().toString(),
+                id: crypto.randomUUID(),
                 timestamp: Date.now(),
                 type,
                 durationMinutes,

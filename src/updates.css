@@ -7,7 +7,7 @@
     --text-primary: var(--accent-break);
     background-color: var(--bg-secondary);
     --border-color: var(--accent-break);
-    box-shadow: inset 0 0 30px var(--border-glow);
+
 }
 
 /* Titlebar */
@@ -386,7 +386,6 @@
 .mini-timer-block {
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 2px;
 }
 
@@ -429,6 +428,35 @@
 
 .mini-active-task.running .mini-active-task-text {
     color: var(--text-secondary);
+}
+
+/* Mini Tracker Status Indicator */
+.mini-tracker-indicator {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.mini-tracker-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    transition: all 0.3s;
+}
+
+.mini-tracker-dot.active {
+    background-color: var(--accent-break);
+    box-shadow: 0 0 6px var(--accent-break);
+    animation: alert-pulse 1.2s infinite;
+}
+
+.mini-tracker-dot.standby {
+    background-color: var(--text-dim);
 }
 
 /* Themes Fix */
@@ -735,12 +763,14 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-end;
+    height: 100%;
     gap: 2px;
     flex: 1;
 }
 
 .hourly-bar-wrap {
-    height: 100%;
+    flex: 1;
     width: 6px;
     /* lebih lebar agar mudah dilihat */
     display: flex;

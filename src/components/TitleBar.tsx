@@ -5,15 +5,15 @@ import type { Mode, LayoutMode } from "../types";
 interface TitleBarProps {
     mode: Mode;
     layoutMode: LayoutMode;
-    isActive: boolean;
+    isTrackerActive?: boolean;
     onSetLayout: (mode: LayoutMode) => void;
 }
 
 /**
  * Title bar terminal-style: label kiri, status tengah, layout buttons kanan.
- * Status indicator blink saat timer running — semua dalam satu baris.
+ * Status indicator blink saat tracker slabpixel running — semua dalam satu baris.
  */
-export function TitleBar({ mode, layoutMode, isActive, onSetLayout }: TitleBarProps) {
+export function TitleBar({ mode, layoutMode, isTrackerActive = false, onSetLayout }: TitleBarProps) {
     const pidRef = useRef(4096 + Math.floor(Math.random() * 9000));
 
     const handleDrag = (e: React.MouseEvent) => {
@@ -34,12 +34,12 @@ export function TitleBar({ mode, layoutMode, isActive, onSetLayout }: TitleBarPr
             </span>
 
             {/* Status inline di tengah titlebar */}
-            <div className={`titlebar-status${isActive ? " running" : ""}`}>
-                <span className={`status-indicator${isActive ? " running" : ""}`}>
-                    {isActive ? "●" : "○"}
+            <div className={`titlebar-status${isTrackerActive ? " running" : ""}`}>
+                <span className={`status-indicator${isTrackerActive ? " running" : ""}`}>
+                    {isTrackerActive ? "●" : "○"}
                 </span>
                 <span className="status-text">
-                    {isActive ? "process_running" : "awaiting_input"}
+                    {isTrackerActive ? "tracker_running" : "tracker_standby"}
                 </span>
                 <span className="status-sep">·</span>
                 <span className="status-pid">pid:{pidRef.current}</span>

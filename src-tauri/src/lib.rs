@@ -10,10 +10,10 @@ const SZ: u32 = 22;
 
 fn render_dot(mode: &str, is_active: bool) -> Vec<u8> {
     let (r, g, b): (u8, u8, u8) = match (mode, is_active) {
-        ("focus", true)  => (255, 69, 69),
+        ("focus", true) => (255, 69, 69),
         ("focus", false) => (255, 204, 0),
-        (_, true)        => (52, 199, 89),
-        (_, false)       => (142, 142, 147),
+        (_, true) => (52, 199, 89),
+        (_, false) => (142, 142, 147),
     };
 
     let mut buf = vec![0u8; (SZ * SZ * 4) as usize];
@@ -35,7 +35,7 @@ fn render_dot(mode: &str, is_active: bool) -> Vec<u8> {
             };
             if alpha > 0 {
                 let i = ((y * SZ + x) * 4) as usize;
-                buf[i]     = r;
+                buf[i] = r;
                 buf[i + 1] = g;
                 buf[i + 2] = b;
                 buf[i + 3] = alpha;
@@ -55,10 +55,9 @@ fn percent_decode(s: &str) -> String {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i] == b'%' && i + 2 < bytes.len() {
-            if let Ok(hex) = u8::from_str_radix(
-                std::str::from_utf8(&bytes[i + 1..i + 3]).unwrap_or(""),
-                16,
-            ) {
+            if let Ok(hex) =
+                u8::from_str_radix(std::str::from_utf8(&bytes[i + 1..i + 3]).unwrap_or(""), 16)
+            {
                 out.push(hex as char);
                 i += 3;
                 continue;
@@ -156,7 +155,6 @@ async fn fetch_tracker_data(app: tauri::AppHandle) -> Result<(), String> {
         })
         .build()
         .map_err(|e| e.to_string())?;
-
     } else {
         println!("[tracker] reusing existing window");
     }
@@ -282,7 +280,8 @@ async fn show_tracker_login(app: tauri::AppHandle) -> Result<(), String> {
 /// Clicks the Pause/Resume button on the SlabPixel tracker page.
 #[tauri::command]
 async fn pause_tracker_timer(app: tauri::AppHandle) -> Result<(), String> {
-    let win = app.get_webview_window("tracker-scraper")
+    let win = app
+        .get_webview_window("tracker-scraper")
         .ok_or_else(|| "Tracker not running. Click Refresh first.".to_string())?;
     win.eval(r#"
         (function() {
@@ -298,9 +297,11 @@ async fn pause_tracker_timer(app: tauri::AppHandle) -> Result<(), String> {
 /// Clicks the Start button on the SlabPixel tracker page.
 #[tauri::command]
 async fn start_tracker_timer(app: tauri::AppHandle) -> Result<(), String> {
-    let win = app.get_webview_window("tracker-scraper")
+    let win = app
+        .get_webview_window("tracker-scraper")
         .ok_or_else(|| "Tracker not running. Click Refresh first.".to_string())?;
-    win.eval(r#"
+    win.eval(
+        r#"
         (function() {
             var allBtns = Array.from(document.querySelectorAll('button'));
             var startBtn = allBtns.find(function(b) {
@@ -313,13 +314,16 @@ async fn start_tracker_timer(app: tauri::AppHandle) -> Result<(), String> {
                 console.warn('[pomotchi] start button not found');
             }
         })();
-    "#).map_err(|e| e.to_string())
+    "#,
+    )
+    .map_err(|e| e.to_string())
 }
 
 /// Clicks the initial Stop button on SlabPixel to open its confirm dialog.
 #[tauri::command]
 async fn initiate_stop_tracker(app: tauri::AppHandle) -> Result<(), String> {
-    let win = app.get_webview_window("tracker-scraper")
+    let win = app
+        .get_webview_window("tracker-scraper")
         .ok_or_else(|| "Tracker not running. Click Refresh first.".to_string())?;
     win.eval(r#"
         (function() {
@@ -347,7 +351,8 @@ async fn initiate_stop_tracker(app: tauri::AppHandle) -> Result<(), String> {
 /// Clicks the confirmation button in the SlabPixel popup.
 #[tauri::command]
 async fn confirm_stop_tracker(app: tauri::AppHandle) -> Result<(), String> {
-    let win = app.get_webview_window("tracker-scraper")
+    let win = app
+        .get_webview_window("tracker-scraper")
         .ok_or_else(|| "Tracker not running. Click Refresh first.".to_string())?;
     win.eval(r#"
         (function() {
@@ -376,7 +381,8 @@ async fn confirm_stop_tracker(app: tauri::AppHandle) -> Result<(), String> {
 /// Clicks the Cancel button in the SlabPixel popup.
 #[tauri::command]
 async fn cancel_stop_tracker(app: tauri::AppHandle) -> Result<(), String> {
-    let win = app.get_webview_window("tracker-scraper")
+    let win = app
+        .get_webview_window("tracker-scraper")
         .ok_or_else(|| "Tracker not running. Click Refresh first.".to_string())?;
     win.eval(r#"
         (function() {
@@ -430,7 +436,11 @@ fn update_tray_timer(app: tauri::AppHandle, time_string: String, mode: String, i
         let _ = tray.set_tooltip(Some(&tip));
     }
 
-    let play_label = if is_active { "⏸  Pause" } else { "▶  Start" };
+    let play_label = if is_active {
+        "⏸  Pause"
+    } else {
+        "▶  Start"
+    };
     let emoji = if mode == "focus" { "🍅" } else { "☕" };
     let mode_label = if mode == "focus" { "Focus" } else { "Break" };
     let status_text = format!("{} {} — {}", emoji, mode_label, time_string);
@@ -449,6 +459,7 @@ fn update_tray_timer(app: tauri::AppHandle, time_string: String, mode: String, i
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             update_tray_tooltip,
@@ -465,11 +476,11 @@ pub fn run() {
         .setup(|app| {
             let status = MenuItemBuilder::with_id("status", "🍅 Focus — 25:00").build(app)?;
             let toggle = MenuItemBuilder::with_id("toggle", "▶  Start").build(app)?;
-            let skip   = MenuItemBuilder::with_id("skip",   "⏭  Skip Session").build(app)?;
-            let sep1   = tauri::menu::PredefinedMenuItem::separator(app)?;
-            let show   = MenuItemBuilder::with_id("show",   "🔲 Show Window").build(app)?;
-            let sep2   = tauri::menu::PredefinedMenuItem::separator(app)?;
-            let quit   = MenuItemBuilder::with_id("quit",   "✕  Quit").build(app)?;
+            let skip = MenuItemBuilder::with_id("skip", "⏭  Skip Session").build(app)?;
+            let sep1 = tauri::menu::PredefinedMenuItem::separator(app)?;
+            let show = MenuItemBuilder::with_id("show", "🔲 Show Window").build(app)?;
+            let sep2 = tauri::menu::PredefinedMenuItem::separator(app)?;
+            let quit = MenuItemBuilder::with_id("quit", "✕  Quit").build(app)?;
 
             let menu = MenuBuilder::new(app)
                 .item(&status)
@@ -493,9 +504,15 @@ pub fn run() {
                             let _ = w.set_focus();
                         }
                     }
-                    "toggle" => { let _ = app.emit("tray-toggle", ()); }
-                    "skip"   => { let _ = app.emit("tray-skip", ()); }
-                    "quit"   => { app.exit(0); }
+                    "toggle" => {
+                        let _ = app.emit("tray-toggle", ());
+                    }
+                    "skip" => {
+                        let _ = app.emit("tray-skip", ());
+                    }
+                    "quit" => {
+                        app.exit(0);
+                    }
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {

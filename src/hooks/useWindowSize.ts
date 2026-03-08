@@ -5,7 +5,7 @@ import type { LayoutMode } from "../types";
 
 // Ukuran window
 const EXPANDED_SIZE = new LogicalSize(800, 600);
-const COMPACT_SIZE = new LogicalSize(480, 180);
+const COMPACT_SIZE = new LogicalSize(480, 220);
 const MINI_SIZE = new LogicalSize(260, 80);
 
 /**

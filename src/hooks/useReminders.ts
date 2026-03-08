@@ -29,6 +29,8 @@ function sendDesktopNotif(text: string) {
     } catch { /* no notif api */ }
 }
 
+let hasFiredSessionWelcome = false;
+
 /**
  * Hook untuk mengelola todo reminders.
  * - Persists ke localStorage
@@ -44,13 +46,63 @@ export function useReminders() {
         const check = () => {
             const now = new Date();
             const nowStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+            const todayDateStr = now.toDateString();
+
+            // 1. Session Welcome Event
+            // Terjadi setiap kali aplikasi dibuka/direfresh. Tidak peduli jam atau hari.
+            if (!hasFiredSessionWelcome) {
+                const welcomeMsg = "Hello sir, welcome back!";
+                const welcomeAlert = {
+                    id: "session-welcome-" + Date.now(),
+                    text: welcomeMsg,
+                    time: nowStr,
+                    triggered: true,
+                    createdAt: Date.now(),
+                };
+
+                setAlerts(curr => {
+                    if (curr.some(a => a.text === welcomeMsg)) return curr;
+                    return [...curr, welcomeAlert];
+                });
+                beepReminder();
+                sendDesktopNotif(welcomeMsg);
+                hasFiredSessionWelcome = true;
+            }
+
+            // 2. Daily 10 AM Event
+            // Terjadi sekali sehari, jika jam sudah >= 10.
+            if (now.getHours() >= 10) {
+                const lastMorningFired = localStorage.getItem("pomodoro-morning-notif-date");
+                if (lastMorningFired !== todayDateStr) {
+                    const morningMsg = "Selamat pagi? Wanna work today?";
+                    const morningAlert = {
+                        id: "daily-morning-routine-" + Date.now(),
+                        text: morningMsg,
+                        time: nowStr,
+                        triggered: true,
+                        createdAt: Date.now(),
+                    };
+
+                    setAlerts(curr => {
+                        if (curr.some(a => a.text === morningMsg)) return curr;
+                        return [...curr, morningAlert];
+                    });
+                    beepReminder();
+                    sendDesktopNotif(morningMsg);
+                    localStorage.setItem("pomodoro-morning-notif-date", todayDateStr);
+                }
+            }
 
             setReminders(prev => {
                 const toFire = prev.filter(r => !r.triggered && r.time === nowStr);
                 if (toFire.length === 0) return prev;
 
-                // Fire alerts
-                setAlerts(curr => [...curr, ...toFire]);
+                // Fire user alerts
+                setAlerts(curr => {
+                    const existingIds = new Set(curr.map(a => a.id));
+                    const newAlerts = toFire.filter(a => !existingIds.has(a.id));
+                    return [...curr, ...newAlerts];
+                });
                 beepReminder();
                 toFire.forEach(r => sendDesktopNotif(r.text));
 
@@ -89,5 +141,35 @@ export function useReminders() {
         setReminders(prev => prev.filter(r => !r.triggered));
     }, [setReminders]);
 
-    return { reminders, alerts, addReminder, deleteReminder, dismissAlert, clearTriggered };
+    const triggerMorningNotification = useCallback(() => {
+        const morningMsg = "Hello sir, welcome back! Selamat pagi? Wanna work today?";
+        const morningAlert = {
+            id: "daily-morning-routine-" + Date.now(),
+            text: morningMsg,
+            time: "10:00",
+            triggered: true,
+            createdAt: Date.now(),
+        };
+        setAlerts(curr => [...curr, morningAlert]);
+        beepReminder();
+        sendDesktopNotif(morningMsg);
+        // Force update the local storage date so we don't accidentally double-trigger it later today if we test it before 10 AM
+        localStorage.setItem("pomodoro-morning-notif-date", new Date().toDateString());
+    }, []);
+
+    const triggerSessionWelcomeNotification = useCallback(() => {
+        const welcomeMsg = "Hello sir, welcome back!";
+        const welcomeAlert = {
+            id: "session-welcome-" + Date.now(),
+            text: welcomeMsg,
+            time: "now",
+            triggered: true,
+            createdAt: Date.now(),
+        };
+        setAlerts(curr => [...curr, welcomeAlert]);
+        beepReminder();
+        sendDesktopNotif(welcomeMsg);
+    }, []);
+
+    return { reminders, alerts, addReminder, deleteReminder, dismissAlert, clearTriggered, triggerMorningNotification, triggerSessionWelcomeNotification };
 }

@@ -99,7 +99,7 @@ export function useTimer(
 
             setMsLeft(prev => {
                 const next = Math.max(0, prev - elapsed);
-                if (next === 0) {
+                if (prev > 0 && next === 0) {
                     // Fire completion asynchronously so React state settles first
                     setTimeout(() => completeSessionRef.current(), 0);
                 }

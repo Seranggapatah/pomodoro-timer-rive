@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 import type { RiveMood, LayoutMode } from "./types";
-import { Clock, Maximize2 } from "lucide-react";
+import { Clock, Maximize2, Bug } from "lucide-react";
 
 // Hooks
 import { useLocalStorage } from "./hooks/useLocalStorage";
@@ -17,6 +17,7 @@ import { useAmbientSound } from "./hooks/useAmbientSound";
 import { useGameData } from "./hooks/useGameData";
 import { useNotes } from "./hooks/useNotes";
 import { useReminders } from "./hooks/useReminders";
+import { useAutoStart } from "./hooks/useAutoStart";
 
 // Components
 import { TitleBar } from "./components/TitleBar";
@@ -43,6 +44,8 @@ import { RemindersPanel } from "./components/RemindersPanel";
 import { ReminderAlert } from "./components/ReminderAlert";
 import { SlabPixelWidget } from "./components/SlabPixelWidget";
 import { useSlabPixelTracker } from "./hooks/useSlabPixelTracker";
+import { DebugPanel } from "./components/DebugPanel";
+import { YearProgress } from "./components/YearProgress";
 
 /**
  * Komponen utama aplikasi Pomodoro Timer.
@@ -54,6 +57,7 @@ function App() {
   const isExpanded = layoutMode === "expanded";
   const [riveMood, setRiveMood] = useState<RiveMood>("idle");
   const [isTaskDashboardOpen, setIsTaskDashboardOpen] = useState(false);
+  const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [showTracker, setShowTracker] = useLocalStorage("pomodoro-show-tracker", false);
 
   // ASCII filter — single settings object
@@ -80,12 +84,13 @@ function App() {
   const stats = useStats();
   const ambient = useAmbientSound();
   const game = useGameData();
-  const { notifyTimerComplete } = useNotification();
+  const { notifyTimerComplete, testAlarm } = useNotification();
   const tasks = useTasks();
   const notes = useNotes();
   const reminders = useReminders();
   const theme = useTheme();
   const { minimizeToTray, updateTrayTimer } = useWindowSize(layoutMode);
+  const sysAutoStart = useAutoStart();
 
   const handleTimerComplete = useCallback((completedMode: "focus" | "break") => {
     notifyTimerComplete(completedMode);
@@ -198,7 +203,7 @@ function App() {
         <TitleBar
           mode={timer.mode}
           layoutMode={layoutMode}
-          isActive={timer.isActive}
+          isTrackerActive={!slabPixel.stopped && !slabPixel.paused && !!slabPixel.trackerTime}
           onSetLayout={setLayoutMode}
         />
       )}
@@ -206,6 +211,9 @@ function App() {
       <div className={`main-content ${layoutMode}`} data-tauri-drag-region>
         {layoutMode === "mini" ? (
           <div className="mini-mode-row" data-tauri-drag-region>
+            <div className="mini-tracker-indicator" title={`SlabPixel Tracker: ${!slabPixel.trackerTime ? "Not Connected" : (slabPixel.paused || slabPixel.stopped ? "Standby" : "Running")}`}>
+              <div className={`mini-tracker-dot ${!slabPixel.trackerTime ? "disconnected" : (slabPixel.paused || slabPixel.stopped ? "standby" : "active")}`} />
+            </div>
             <button
               className="mini-expand-btn"
               onClick={cycleLayout}
@@ -380,10 +388,12 @@ function App() {
                     breakDuration={breakDuration}
                     longBreakDuration={longBreakDuration}
                     autoStart={autoStart}
+                    isAutoStartOnLogin={sysAutoStart.isAutoStartOnLogin}
                     onFocusDurationChange={setFocusDuration}
                     onBreakDurationChange={setBreakDuration}
                     onLongBreakDurationChange={setLongBreakDuration}
                     onAutoStartChange={setAutoStart}
+                    onToggleAutoStartOnLogin={sysAutoStart.toggleAutoStartOnLogin}
                   />
 
                   <div className="bottom-controls">
@@ -403,6 +413,9 @@ function App() {
                       settings={ascii}
                       onChange={patchAscii}
                     />
+                    <button className="tray-btn" onClick={() => setIsDebugOpen(true)} title="Super Admin / Debug">
+                      <Bug size={14} />
+                    </button>
                     <button className="tray-btn" onClick={minimizeToTray}>
                       [minimize_to_tray]
                     </button>
@@ -439,6 +452,7 @@ function App() {
                   />
                   <TimelineHistory logs={stats.logs} />
                   <HourlyChart hourlyData={stats.hourlyProductivity} />
+                  <YearProgress />
                   <ActivityHeatmap days={stats.heatmap90} />
                   <WeeklyDashboard last7Days={stats.last7Days} />
                   <GameStats
@@ -478,6 +492,18 @@ function App() {
         alerts={reminders.alerts}
         onDismiss={reminders.dismissAlert}
       />
+
+      {isDebugOpen && (
+        <DebugPanel
+          onClose={() => setIsDebugOpen(false)}
+          triggerWelcomeNotification={reminders.triggerSessionWelcomeNotification}
+          triggerMorningNotification={reminders.triggerMorningNotification}
+          notifyTimerComplete={notifyTimerComplete}
+          testAlarm={testAlarm}
+          game={game}
+          tasks={tasks}
+        />
+      )}
     </div>
   );
 }

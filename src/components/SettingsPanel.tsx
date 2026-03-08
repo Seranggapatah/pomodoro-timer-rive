@@ -3,10 +3,12 @@ interface SettingsPanelProps {
     breakDuration: number;
     longBreakDuration: number;
     autoStart: boolean;
+    isAutoStartOnLogin?: boolean;
     onFocusDurationChange: (minutes: number) => void;
     onBreakDurationChange: (minutes: number) => void;
     onLongBreakDurationChange: (minutes: number) => void;
     onAutoStartChange: (autoStart: boolean) => void;
+    onToggleAutoStartOnLogin?: () => void;
 }
 
 interface DurationRowProps {
@@ -49,10 +51,12 @@ export function SettingsPanel({
     breakDuration,
     longBreakDuration,
     autoStart,
+    isAutoStartOnLogin = false,
     onFocusDurationChange,
     onBreakDurationChange,
     onLongBreakDurationChange,
     onAutoStartChange,
+    onToggleAutoStartOnLogin,
 }: SettingsPanelProps) {
     return (
         <div className="settings-panel">
@@ -62,12 +66,22 @@ export function SettingsPanel({
             <DurationRow label="long_break:" value={longBreakDuration} min={1} max={60} onChange={onLongBreakDurationChange} />
 
             <div className="settings-row toggle-row">
-                <label className="settings-label">auto_start:</label>
+                <label className="settings-label">auto_start_timer:</label>
                 <button
                     className={`settings-toggle-btn ${autoStart ? "active" : ""}`}
                     onClick={() => onAutoStartChange(!autoStart)}
                 >
                     [{autoStart ? " x " : "   "}]
+                </button>
+            </div>
+
+            <div className="settings-row toggle-row">
+                <label className="settings-label">run_on_startup:</label>
+                <button
+                    className={`settings-toggle-btn ${isAutoStartOnLogin ? "active" : ""}`}
+                    onClick={onToggleAutoStartOnLogin}
+                >
+                    [{isAutoStartOnLogin ? " x " : "   "}]
                 </button>
             </div>
         </div>

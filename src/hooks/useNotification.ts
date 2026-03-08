@@ -31,7 +31,7 @@ function playAlarmSound() {
 }
 
 /**
- * Menampilkan notifikasi desktop Windows.
+ * Menampilkan notifikasi desktop Windows saat timer selesai.
  */
 function showDesktopNotification(completedMode: Mode) {
     const title = completedMode === "focus"
@@ -67,6 +67,10 @@ export function useNotification() {
         showDesktopNotification(completedMode);
     }, []);
 
+    const testAlarm = useCallback(() => {
+        playAlarmSound();
+    }, []);
+
     // Minta izin notifikasi saat pertama kali
     try {
         if (typeof Notification !== "undefined" && Notification.permission === "default") {
@@ -76,5 +80,5 @@ export function useNotification() {
         // Diabaikan
     }
 
-    return { notifyTimerComplete };
+    return { notifyTimerComplete, testAlarm };
 }

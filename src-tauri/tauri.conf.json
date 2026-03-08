@@ -14,7 +14,7 @@
       {
         "title": "Pomotchi",
         "width": 480,
-        "height": 180,
+        "height": 220,
         "alwaysOnTop": true,
         "decorations": false,
         "transparent": true,
