@@ -1,0 +1,54 @@
+.weather-widget {
+    display: flex;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    padding: 2px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+    gap: 6px;
+    user-select: none;
+    transition: all 0.2s;
+}
+
+.weather-widget:hover {
+    color: var(--text-primary);
+    border-color: var(--text-dim);
+    background-color: var(--bg-tertiary);
+}
+
+.weather-icon {
+    font-size: 12px;
+    color: var(--accent-break);
+    /* Light blue for weather */
+    min-width: 24px;
+    text-align: center;
+    display: inline-block;
+}
+
+.weather-temp {
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.weather-loc {
+    font-size: 10px;
+    opacity: 0.8;
+    letter-spacing: 0.05em;
+}
+
+.weather-loading,
+.weather-error {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* For compact layout, make it tighter */
+.weather-widget.compact {
+    padding: 2px 6px;
+    gap: 4px;
+    font-size: 10px;
+}

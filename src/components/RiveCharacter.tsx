@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from "react";
-import { useRive, useViewModelInstanceNumber } from "@rive-app/react-webgl2";
-import catRiv from "../assets/rive/cat.riv";
+import { useEffect } from "react";
+import { useRive, useViewModelInstanceNumber, useViewModelInstanceTrigger } from "@rive-app/react-webgl2";
+import catRiv from "../assets/rive/cat_8.riv";
 import type { Mode, RiveMood } from "../types";
 import { useAsciiFilter } from "../hooks/useAsciiFilter";
 import type { AsciiSettings } from "./AsciiToggle";
@@ -16,17 +16,14 @@ interface RiveCharacterProps {
 }
 
 /**
- * Mapping mood → pose number di Rive.
- *   idle    → 0
- *   working → 1
- *   happy   → 2
- *   sad     → 3
+ * Mapping mood → Trigger name di Rive.
  */
-const MOOD_TO_POSE: Record<RiveMood, number> = {
-    idle: 0,
-    working: 1,
-    happy: 2,
-    sad: 3,
+const MOOD_TO_TRIGGER: Record<RiveMood, string> = {
+    idle: "idle",
+    focus: "focusLvl1",
+    halfway: "focusLvl2",
+    almost_done: "focusLvl3",
+    break: "Break",
 };
 
 export function RiveCharacter({
@@ -46,11 +43,11 @@ export function RiveCharacter({
         autoBind: true,
     });
 
-    const { setValue: setPose } = useViewModelInstanceNumber(
-        "Pose",
-        // @ts-ignore
-        rive?.viewModelInstance
-    );
+    const triggerIdle = useViewModelInstanceTrigger("idle", rive?.viewModelInstance as any);
+    const triggerFocus1 = useViewModelInstanceTrigger("focusLvl1", rive?.viewModelInstance as any);
+    const triggerFocus2 = useViewModelInstanceTrigger("focusLvl2", rive?.viewModelInstance as any);
+    const triggerFocus3 = useViewModelInstanceTrigger("focusLvl3", rive?.viewModelInstance as any);
+    const triggerBreak = useViewModelInstanceTrigger("Break", rive?.viewModelInstance as any);
 
     const { setValue: setXp } = useViewModelInstanceNumber(
         "XP",
@@ -58,34 +55,23 @@ export function RiveCharacter({
         rive?.viewModelInstance
     );
 
-    const [displayMood, setDisplayMood] = useState<RiveMood>(mood);
-    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Helper map of all our trigger fire functions
+    const triggerVars: Record<string, (() => void) | undefined> = {
+        "idle": triggerIdle.trigger,
+        "focusLvl1": triggerFocus1.trigger,
+        "focusLvl2": triggerFocus2.trigger,
+        "focusLvl3": triggerFocus3.trigger,
+        "Break": triggerBreak.trigger,
+    };
 
-    // Handle mood changes with temporary reactions
+    // Sync trigger → Rive
     useEffect(() => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-        setDisplayMood(mood);
-
-        if (mood === "happy") {
-            timeoutRef.current = setTimeout(() => {
-                setDisplayMood(isActive ? "working" : "idle");
-            }, 3000);
-        } else if (mood === "sad") {
-            timeoutRef.current = setTimeout(() => {
-                setDisplayMood("idle");
-            }, 2000);
+        const triggerName = MOOD_TO_TRIGGER[mood];
+        const fireTrigger = triggerVars[triggerName];
+        if (fireTrigger) {
+            fireTrigger();
         }
-
-        return () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        };
-    }, [mood, isActive]);
-
-    // Sync pose → Rive
-    useEffect(() => {
-        if (setPose) setPose(MOOD_TO_POSE[displayMood]);
-    }, [setPose, displayMood]);
+    }, [mood, triggerIdle.trigger, triggerFocus1.trigger, triggerFocus2.trigger, triggerFocus3.trigger, triggerBreak.trigger]);
 
     // Sync XP → Rive
     useEffect(() => {
@@ -95,7 +81,7 @@ export function RiveCharacter({
     const size = layoutMode === "mini" ? "mini" : isExpanded ? "expanded" : "compact";
 
     // Derive charSize from ascii settings, or size-based default
-    const asciiEnabled = ascii?.enabled ?? false;
+    const asciiEnabled = (ascii?.enabled ?? false) && !isExpanded;
     const resolvedCharSize = ascii?.charSize ?? (size === "mini" ? 4 : size === "expanded" ? 7 : 5);
 
     const { overlayRef, containerRef } = useAsciiFilter({

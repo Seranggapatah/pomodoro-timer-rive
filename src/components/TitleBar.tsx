@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Mode, LayoutMode } from "../types";
+import { TitleBarWeatherTicker } from "./TitleBarWeatherTicker";
 
 interface TitleBarProps {
     mode: Mode;
@@ -29,9 +30,14 @@ export function TitleBar({ mode, layoutMode, isTrackerActive = false, onSetLayou
 
     return (
         <div className="titlebar" data-tauri-drag-region onMouseDown={handleDrag}>
-            <span className="titlebar-label">
-                {mode === "focus" ? "focus_session" : "break_time"}
-            </span>
+            <div className="titlebar-left" style={{ display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                <span className="titlebar-label">
+                    {mode === "focus" ? "focus_session" : "break_time"}
+                </span>
+
+                {/* Weather Ticker inline beside label */}
+                <TitleBarWeatherTicker layoutMode={layoutMode} />
+            </div>
 
             {/* Status inline di tengah titlebar */}
             <div className={`titlebar-status${isTrackerActive ? " running" : ""}`}>

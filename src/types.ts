@@ -99,7 +99,7 @@ export type AmbientSound = "off" | "rain" | "white-noise" | "lofi";
 /**
  * Mood kucing Rive berdasarkan state app.
  */
-export type RiveMood = "idle" | "working" | "happy" | "sad";
+export type RiveMood = "idle" | "focus" | "halfway" | "almost_done" | "break";
 
 /**
  * Data gamification (streak, level, achievement, XP).

@@ -46,6 +46,7 @@ import { SlabPixelWidget } from "./components/SlabPixelWidget";
 import { useSlabPixelTracker } from "./hooks/useSlabPixelTracker";
 import { DebugPanel } from "./components/DebugPanel";
 import { YearProgress } from "./components/YearProgress";
+import { WeatherWidget } from "./components/WeatherWidget";
 
 /**
  * Komponen utama aplikasi Pomodoro Timer.
@@ -55,7 +56,6 @@ import { YearProgress } from "./components/YearProgress";
 function App() {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("compact");
   const isExpanded = layoutMode === "expanded";
-  const [riveMood, setRiveMood] = useState<RiveMood>("idle");
   const [isTaskDashboardOpen, setIsTaskDashboardOpen] = useState(false);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [showTracker, setShowTracker] = useLocalStorage("pomodoro-show-tracker", false);
@@ -110,7 +110,6 @@ function App() {
       stats.recordSession(focusDuration);
       tasks.incrementActiveTaskPomodoro(focusDuration);
       game.recordGameSession(focusDuration);
-      setRiveMood("happy");
     }
   }, [
     notifyTimerComplete,
@@ -126,10 +125,7 @@ function App() {
   ]);
 
 
-  // Timer reset: rive sad
-  const handleTimerReset = useCallback(() => {
-    setRiveMood("sad");
-  }, []);
+  const handleTimerReset = useCallback(() => { }, []);
 
   const handleToggleTask = useCallback((id: string) => {
     const task = tasks.tasks.find(t => t.id === id);
@@ -169,16 +165,24 @@ function App() {
     };
   }, [timer.toggleTimer, timer.switchMode, timer.mode]);
 
-  // Rive mood logic
-  const currentMood: RiveMood = riveMood === "happy" || riveMood === "sad"
-    ? riveMood
-    : timer.isActive
-      ? (timer.mode === "break" ? "idle" : "working")
-      : "idle";
+  // Rive mood logic (derived from timer progress)
+  let currentMood: RiveMood = "idle";
+  if (timer.mode === "break") {
+    currentMood = "break";
+  } else if (!timer.isActive) {
+    currentMood = "idle";
+  } else {
+    const halfMs = timer.totalModeMs / 2;
+    // "almost done" is last 15% or 1 minute (whichever is smaller)
+    const almostDoneMs = Math.min(timer.totalModeMs * 0.15, 60000);
 
-  // Reset mood after timeout
-  if (riveMood === "happy" || riveMood === "sad") {
-    setTimeout(() => setRiveMood("idle"), riveMood === "happy" ? 3100 : 2100);
+    if (timer.msLeft <= almostDoneMs) {
+      currentMood = "almost_done";
+    } else if (timer.msLeft <= halfMs) {
+      currentMood = "halfway";
+    } else {
+      currentMood = "focus";
+    }
   }
 
   // Layout Cycle Toggle
@@ -233,7 +237,7 @@ function App() {
             </div>
 
             <div className="mini-timer-block" data-tauri-drag-region>
-              <div className={`timer-display mini${!timer.isActive ? " idle" : ""}${currentMood === "happy" ? " session-done" : ""}`} data-tauri-drag-region>
+              <div className={`timer-display mini${!timer.isActive ? " idle" : ""}`} data-tauri-drag-region>
                 {timer.timeString}
                 <span className={`timer-ms mini ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
               </div>
@@ -278,7 +282,7 @@ function App() {
           <>
             {/* Kolom Kiri */}
             <div className={`left-column ${layoutMode}`}>
-              <div className={`timer-display ${layoutMode}${!timer.isActive ? " idle" : ""}${currentMood === "happy" ? " session-done" : ""}`}>
+              <div className={`timer-display ${layoutMode}${!timer.isActive ? " idle" : ""}`}>
                 {timer.timeString}
                 <span className={`timer-ms ${layoutMode} ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
               </div>
@@ -397,6 +401,7 @@ function App() {
                   />
 
                   <div className="bottom-controls">
+                    <WeatherWidget layoutMode={layoutMode} />
                     <ModeToggle
                       mode={timer.mode}
                       onSwitchMode={timer.switchMode}

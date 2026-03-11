@@ -1,0 +1,59 @@
+.titlebar-ticker-container {
+    display: flex;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: 8px;
+}
+
+.titlebar-sep {
+    margin-right: 8px;
+    opacity: 0.5;
+}
+
+.titlebar-ticker-viewport {
+    height: 16px;
+    /* Adjust to line height */
+    overflow: hidden;
+    position: relative;
+    width: 90px;
+    display: flex;
+    align-items: center;
+}
+
+.titlebar-ticker-track {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.titlebar-ticker-track.index-0 {
+    transform: translateY(0);
+}
+
+.titlebar-ticker-track.index-1 {
+    transform: translateY(-16px);
+}
+
+.titlebar-ticker-item {
+    height: 16px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.titlebar-ticker-item .weather-icon {
+    font-size: 11px;
+    min-width: 22px;
+}
+
+.ticker-location {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--accent-break);
+}
