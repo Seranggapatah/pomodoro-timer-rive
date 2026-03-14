@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useRive, useViewModelInstanceNumber, useViewModelInstanceTrigger } from "@rive-app/react-webgl2";
-import catRiv from "../assets/rive/cat_8.riv";
+import catRiv from "../assets/rive/cat_10.riv";
 import type { Mode, RiveMood } from "../types";
 import { useAsciiFilter } from "../hooks/useAsciiFilter";
 import type { AsciiSettings } from "./AsciiToggle";
@@ -23,6 +23,7 @@ const MOOD_TO_TRIGGER: Record<RiveMood, string> = {
     focus: "focusLvl1",
     halfway: "focusLvl2",
     almost_done: "focusLvl3",
+    focus_end: "focusEnd",
     break: "Break",
 };
 
@@ -47,6 +48,7 @@ export function RiveCharacter({
     const triggerFocus1 = useViewModelInstanceTrigger("focusLvl1", rive?.viewModelInstance as any);
     const triggerFocus2 = useViewModelInstanceTrigger("focusLvl2", rive?.viewModelInstance as any);
     const triggerFocus3 = useViewModelInstanceTrigger("focusLvl3", rive?.viewModelInstance as any);
+    const triggerFocusEnd = useViewModelInstanceTrigger("focusEnd", rive?.viewModelInstance as any);
     const triggerBreak = useViewModelInstanceTrigger("Break", rive?.viewModelInstance as any);
 
     const { setValue: setXp } = useViewModelInstanceNumber(
@@ -61,6 +63,7 @@ export function RiveCharacter({
         "focusLvl1": triggerFocus1.trigger,
         "focusLvl2": triggerFocus2.trigger,
         "focusLvl3": triggerFocus3.trigger,
+        "focusEnd": triggerFocusEnd.trigger,
         "Break": triggerBreak.trigger,
     };
 
@@ -71,7 +74,7 @@ export function RiveCharacter({
         if (fireTrigger) {
             fireTrigger();
         }
-    }, [mood, triggerIdle.trigger, triggerFocus1.trigger, triggerFocus2.trigger, triggerFocus3.trigger, triggerBreak.trigger]);
+    }, [mood, triggerIdle.trigger, triggerFocus1.trigger, triggerFocus2.trigger, triggerFocus3.trigger, triggerFocusEnd.trigger, triggerBreak.trigger]);
 
     // Sync XP → Rive
     useEffect(() => {
@@ -81,7 +84,7 @@ export function RiveCharacter({
     const size = layoutMode === "mini" ? "mini" : isExpanded ? "expanded" : "compact";
 
     // Derive charSize from ascii settings, or size-based default
-    const asciiEnabled = (ascii?.enabled ?? false) && !isExpanded;
+    const asciiEnabled = ascii?.enabled ?? false;
     const resolvedCharSize = ascii?.charSize ?? (size === "mini" ? 4 : size === "expanded" ? 7 : 5);
 
     const { overlayRef, containerRef } = useAsciiFilter({

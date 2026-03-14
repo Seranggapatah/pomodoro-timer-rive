@@ -233,7 +233,6 @@ body,
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
   transition: all 0.2s;
   z-index: 50;
 }
@@ -247,14 +246,11 @@ body,
   width: 50px;
   height: 50px;
   flex-shrink: 0;
-  border-radius: 50%;
-  overflow: hidden;
-  background-color: var(--bg-secondary);
-  border: 2px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  overflow: visible;
 }
 
 .mini-controls-wrapper {
@@ -269,7 +265,6 @@ body,
   color: var(--text-primary);
   width: 24px;
   height: 24px;
-  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -327,6 +322,17 @@ body,
 }
 
 
+
+/* ===== TIMER PANEL (expanded mode grouping) ===== */
+.timer-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 8px;
+  padding: 16px 20px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+}
 
 /* ===== TIMER DISPLAY ===== */
 .timer-display {
@@ -624,10 +630,17 @@ body,
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
 }
 
 .task-section.hidden {
   display: none;
+}
+
+.task-section.visible {
+  display: flex;
 }
 
 /* --- Task Header & Tabs --- */
@@ -903,7 +916,7 @@ body,
   top: 50%;
   transform: translateY(-50%);
 
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .rive-container.expanded {
@@ -963,10 +976,9 @@ body,
 }
 
 .rive-component-mini {
-  width: 240%;
-  height: 240%;
-  object-fit: cover;
-  transform: translateY(-24%) translateX(-28%);
+  width: 140%;
+  height: 140%;
+  object-fit: contain;
 }
 
 /* ===== ANIMATIONS ===== */
@@ -1137,7 +1149,8 @@ body,
 
 /* ===== THEME SELECTOR ===== */
 .theme-selector {
-  display: wrap;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0px;
 }
@@ -1308,8 +1321,11 @@ body,
 .bottom-controls {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  /* make inner items 12px gap instead of 8px */
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  margin-top: 8px;
 }
 
 /* ===== TRAY BUTTON ===== */

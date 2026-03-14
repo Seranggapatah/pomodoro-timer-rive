@@ -99,7 +99,7 @@ export type AmbientSound = "off" | "rain" | "white-noise" | "lofi";
 /**
  * Mood kucing Rive berdasarkan state app.
  */
-export type RiveMood = "idle" | "focus" | "halfway" | "almost_done" | "break";
+export type RiveMood = "idle" | "focus" | "halfway" | "almost_done" | "focus_end" | "break";
 
 /**
  * Data gamification (streak, level, achievement, XP).
@@ -115,6 +115,8 @@ export interface GameData {
     xp: number;          // XP dalam level saat ini
     totalXp: number;     // Total XP sepanjang masa
     xpToNextLevel: number;
+    // Flappy Droid Game
+    flappyDroidScore?: number;
 }
 
 /**

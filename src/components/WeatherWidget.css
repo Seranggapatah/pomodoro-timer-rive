@@ -7,7 +7,7 @@
     border: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
     padding: 2px 8px;
-    border-radius: 2px;
+    /* no border-radius — terminal square aesthetic */
     white-space: nowrap;
     gap: 6px;
     user-select: none;

@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-
 // ─── Patch WebGL2 context creation ──────────────────────────────────────────
 // Rive WebGL2 renderer reads pixels during ASCII conversion.
 // By default WebGL2 clears the drawing buffer after each frame ("swap"),

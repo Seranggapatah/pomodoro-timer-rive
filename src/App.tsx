@@ -1,26 +1,31 @@
 import { useState, useCallback, useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
-import type { RiveMood, LayoutMode } from "./types";
-import { Clock, Maximize2, Bug } from "lucide-react";
+import type { RiveMood } from "./types";
+import { Clock, Maximize2, Bug, Gamepad2 } from "lucide-react";
+// ── Zustand stores ──────────────────────────────────────────────────────────
+import { useSettingsStore } from "./stores/settingsStore";
+import { useTaskStore } from "./stores/taskStore";
+import { useThemeStore } from "./stores/themeStore";
+import { useNotesStore } from "./stores/notesStore";
+import { useStats } from "./stores/statsStore";
+import { useStatsStore } from "./stores/statsStore";
+import { useGame } from "./stores/gameStore";
+import { useGameStore } from "./stores/gameStore";
+import { useAmbientStore, useAmbientEffect } from "./stores/ambientStore";
+import { useRemindersStore, useRemindersEffect } from "./stores/remindersStore";
 
-// Hooks
-import { useLocalStorage } from "./hooks/useLocalStorage";
+// ── Hooks that remain as hooks (side-effect / platform) ─────────────────────
 import { useTimer } from "./hooks/useTimer";
-import { useTasks } from "./hooks/useTasks";
 import { useWindowSize } from "./hooks/useWindowSize";
-import { useTheme } from "./hooks/useTheme";
 import { useNotification } from "./hooks/useNotification";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
-import { useStats } from "./hooks/useStats";
-import { useAmbientSound } from "./hooks/useAmbientSound";
-import { useGameData } from "./hooks/useGameData";
-import { useNotes } from "./hooks/useNotes";
-import { useReminders } from "./hooks/useReminders";
 import { useAutoStart } from "./hooks/useAutoStart";
+import { useSlabPixelTracker } from "./hooks/useSlabPixelTracker";
 
-// Components
+// ── Components ──────────────────────────────────────────────────────────────
 import { TitleBar } from "./components/TitleBar";
+import { TimerMillis } from "./components/TimerMillis";
 import { TimerControls } from "./components/TimerControls";
 import { TaskList } from "./components/TaskList";
 import { ModeToggle } from "./components/ModeToggle";
@@ -30,7 +35,6 @@ import { ThemeSelector } from "./components/ThemeSelector";
 import { StatsDisplay } from "./components/StatsDisplay";
 import { AmbientToggle } from "./components/AmbientToggle";
 import { AsciiToggle } from "./components/AsciiToggle";
-import type { AsciiSettings } from "./components/AsciiToggle";
 import { WeeklyDashboard } from "./components/WeeklyDashboard";
 import { GameStats } from "./components/GameStats";
 import { NotesPanel } from "./components/NotesPanel";
@@ -43,110 +47,109 @@ import { BreakOverlay } from "./components/BreakOverlay";
 import { RemindersPanel } from "./components/RemindersPanel";
 import { ReminderAlert } from "./components/ReminderAlert";
 import { SlabPixelWidget } from "./components/SlabPixelWidget";
-import { useSlabPixelTracker } from "./hooks/useSlabPixelTracker";
 import { DebugPanel } from "./components/DebugPanel";
 import { YearProgress } from "./components/YearProgress";
 import { WeatherWidget } from "./components/WeatherWidget";
+import GameApp from "./GameApp";
 
 /**
  * Komponen utama aplikasi Pomodoro Timer.
  *
- * Shortcuts: Space = Play/Pause | R = Reset | E = Expand | M = Minimize to tray
+ * Shortcuts: Space = Play/Pause | R = Reset | L = Layout cycle
  */
 function App() {
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>("compact");
+  // ── Zustand stores ──────────────────────────────────────────────────────
+  const {
+    layoutMode, setLayoutMode,
+    showTracker, setShowTracker,
+    focusDuration, setFocusDuration,
+    breakDuration, setBreakDuration,
+    longBreakDuration, setLongBreakDuration,
+    autoStart, setAutoStart,
+    ascii, patchAscii,
+  } = useSettingsStore();
+
   const isExpanded = layoutMode === "expanded";
-  const [isTaskDashboardOpen, setIsTaskDashboardOpen] = useState(false);
-  const [isDebugOpen, setIsDebugOpen] = useState(false);
-  const [showTracker, setShowTracker] = useLocalStorage("pomodoro-show-tracker", false);
 
-  // ASCII filter — single settings object
-  const [ascii, setAscii] = useState<AsciiSettings>({
-    enabled: false,
-    charset: "detailed",
-    color: "#00ff88",
-    charSize: 7,
-    opacity: 0.9,
-    colorBlend: 0.65,
-  });
-
-  const patchAscii = useCallback((patch: Partial<AsciiSettings>) => {
-    setAscii(prev => ({ ...prev, ...patch }));
-  }, []);
-
-  // Persistent settings
-  const [focusDuration, setFocusDuration] = useLocalStorage("pomodoro-focus-min", 25);
-  const [breakDuration, setBreakDuration] = useLocalStorage("pomodoro-break-min", 5);
-  const [longBreakDuration, setLongBreakDuration] = useLocalStorage("pomodoro-longbreak-min", 15);
-  const [autoStart, setAutoStart] = useLocalStorage("pomodoro-autostart", false);
-
-  // Hooks
+  const tasks = useTaskStore();
+  const { themeName, setThemeName } = useThemeStore();
+  const { note, setNote } = useNotesStore();
   const stats = useStats();
-  const ambient = useAmbientSound();
-  const game = useGameData();
+  const game = useGame();
+  const { ambientType, cycleAmbient } = useAmbientStore();
+  const reminders = useRemindersStore();
+
+  // ── Side-effect hooks (stores + remaining hooks) ────────────────────────
+  useAmbientEffect();
+  useRemindersEffect();
+
   const { notifyTimerComplete, testAlarm } = useNotification();
-  const tasks = useTasks();
-  const notes = useNotes();
-  const reminders = useReminders();
-  const theme = useTheme();
   const { minimizeToTray, updateTrayTimer } = useWindowSize(layoutMode);
   const sysAutoStart = useAutoStart();
+  const slabPixel = useSlabPixelTracker();
 
+  // ── Local UI state ──────────────────────────────────────────────────────
+  const [isTaskDashboardOpen, setIsTaskDashboardOpen] = useState(false);
+  const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const [isGameOpen, setIsGameOpen] = useState(false);
+
+  // ── Callbacks (use getState() to avoid stale closures) ──────────────────
   const handleTimerComplete = useCallback((completedMode: "focus" | "break") => {
     notifyTimerComplete(completedMode);
 
-    // Cari nama task yang sedang aktif saat ini
-    const currentActiveTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
+    const { tasks: allTasks, activeTaskId, incrementActiveTaskPomodoro } = useTaskStore.getState();
+    const { focusDuration: fd, breakDuration: bd, longBreakDuration: lbd } = useSettingsStore.getState();
+    const { recordTimelineLog, recordSession } = useStatsStore.getState();
+    const { recordGameSession } = useGameStore.getState();
+
+    const currentActiveTask = allTasks.find(t => t.id === activeTaskId && !t.completed && !t.archived);
     const taskName = currentActiveTask ? currentActiveTask.text : undefined;
 
-    // Record timeline histori
-    stats.recordTimelineLog(
+    recordTimelineLog(
       completedMode,
-      completedMode === "focus" ? focusDuration : (completedMode === "break" ? breakDuration : longBreakDuration),
+      completedMode === "focus" ? fd : (completedMode === "break" ? bd : lbd),
       completedMode === "focus" ? taskName : undefined
     );
 
     if (completedMode === "focus") {
-      stats.recordSession(focusDuration);
-      tasks.incrementActiveTaskPomodoro(focusDuration);
-      game.recordGameSession(focusDuration);
+      recordSession(fd);
+      incrementActiveTaskPomodoro(fd);
+      recordGameSession(fd);
     }
-  }, [
-    notifyTimerComplete,
-    stats.recordSession,
-    stats.recordTimelineLog,
-    focusDuration,
-    breakDuration,
-    longBreakDuration,
-    tasks.incrementActiveTaskPomodoro,
-    game.recordGameSession,
-    tasks.tasks,
-    tasks.activeTaskId
-  ]);
-
+  }, [notifyTimerComplete]);
 
   const handleTimerReset = useCallback(() => { }, []);
 
   const handleToggleTask = useCallback((id: string) => {
-    const task = tasks.tasks.find(t => t.id === id);
-    if (task && !task.completed) {
-      stats.recordTaskComplete();
-      game.recordTaskComplete();
-    }
-    tasks.toggleTask(id);
-  }, [tasks.tasks, tasks.toggleTask, stats.recordTaskComplete, game.recordTaskComplete]);
+    const { tasks: allTasks, toggleTask } = useTaskStore.getState();
+    const { recordTaskComplete: statsRecord } = useStatsStore.getState();
+    const { recordTaskComplete: gameRecord } = useGameStore.getState();
 
+    const task = allTasks.find(t => t.id === id);
+    if (task && !task.completed) {
+      statsRecord();
+      gameRecord();
+    }
+    toggleTask(id);
+  }, []);
+
+  const handleAddTask = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    useTaskStore.getState().submitNewTask();
+  }, []);
+
+  const openGameWindow = useCallback(() => {
+    setIsGameOpen(true);
+  }, []);
+
+  // ── Timer ───────────────────────────────────────────────────────────────
   const timer = useTimer(focusDuration, breakDuration, longBreakDuration, autoStart, handleTimerComplete, handleTimerReset);
 
-  // SlabPixel time tracker scraper
-  const slabPixel = useSlabPixelTracker();
-
-  // Update tray icon (teks timer) + tooltip setiap detik
+  // ── Tray updates ────────────────────────────────────────────────────────
   useEffect(() => {
     updateTrayTimer(timer.timeString, timer.mode, timer.isActive);
   }, [timer.timeString, timer.mode, timer.isActive, updateTrayTimer]);
 
-  // Dengarkan event dari tray menu (Start/Pause & Skip)
   useEffect(() => {
     let unlistenToggle: (() => void) | undefined;
     let unlistenSkip: (() => void) | undefined;
@@ -165,42 +168,37 @@ function App() {
     };
   }, [timer.toggleTimer, timer.switchMode, timer.mode]);
 
-  // Rive mood logic (derived from timer progress)
+  // ── Rive mood ───────────────────────────────────────────────────────────
   let currentMood: RiveMood = "idle";
   if (timer.mode === "break") {
     currentMood = "break";
+  } else if (timer.msLeft === 0 && timer.mode === "focus") {
+    // Focus timer just finished — show focusEnd for 3s before switching to break
+    currentMood = "focus_end";
   } else if (!timer.isActive) {
     currentMood = "idle";
   } else {
     const halfMs = timer.totalModeMs / 2;
-    // "almost done" is last 15% or 1 minute (whichever is smaller)
     const almostDoneMs = Math.min(timer.totalModeMs * 0.15, 60000);
-
-    if (timer.msLeft <= almostDoneMs) {
-      currentMood = "almost_done";
-    } else if (timer.msLeft <= halfMs) {
-      currentMood = "halfway";
-    } else {
-      currentMood = "focus";
-    }
+    if (timer.msLeft <= almostDoneMs) currentMood = "almost_done";
+    else if (timer.msLeft <= halfMs) currentMood = "halfway";
+    else currentMood = "focus";
   }
 
-  // Layout Cycle Toggle
+  // ── Layout cycle ────────────────────────────────────────────────────────
   const cycleLayout = useCallback(() => {
-    setLayoutMode((prev: LayoutMode) => {
-      if (prev === "compact") return "expanded";
-      if (prev === "expanded") return "mini";
-      return "compact";
-    });
-  }, []);
+    useSettingsStore.getState().setLayoutMode(
+      layoutMode === "compact" ? "expanded" : layoutMode === "expanded" ? "mini" : "compact"
+    );
+  }, [layoutMode]);
 
-  // Keyboard shortcuts
   useKeyboardShortcuts({
     onToggleTimer: timer.toggleTimer,
     onResetTimer: timer.resetTimer,
     onCycleLayout: cycleLayout,
   });
 
+  // ── JSX ─────────────────────────────────────────────────────────────────
   return (
     <div className={`app-container ${timer.mode}`}>
       {layoutMode !== "mini" && (
@@ -218,11 +216,7 @@ function App() {
             <div className="mini-tracker-indicator" title={`SlabPixel Tracker: ${!slabPixel.trackerTime ? "Not Connected" : (slabPixel.paused || slabPixel.stopped ? "Standby" : "Running")}`}>
               <div className={`mini-tracker-dot ${!slabPixel.trackerTime ? "disconnected" : (slabPixel.paused || slabPixel.stopped ? "standby" : "active")}`} />
             </div>
-            <button
-              className="mini-expand-btn"
-              onClick={cycleLayout}
-              title="Expand Mode"
-            >
+            <button className="mini-expand-btn" onClick={cycleLayout} title="Expand Mode">
               <Maximize2 size={12} />
             </button>
             <div className="mini-rive-wrapper" data-tauri-drag-region>
@@ -239,10 +233,9 @@ function App() {
             <div className="mini-timer-block" data-tauri-drag-region>
               <div className={`timer-display mini${!timer.isActive ? " idle" : ""}`} data-tauri-drag-region>
                 {timer.timeString}
-                <span className={`timer-ms mini ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
+                <TimerMillis msLeftRef={timer.msLeftRef} isActive={timer.isActive} className={`timer-ms mini ${timer.isActive ? "running" : ""}`} />
               </div>
 
-              {/* SlabPixel Tracker - Mini mode */}
               {showTracker && (
                 <div className="mini-tracker-display" title="SlabPixel Tracker Timer">
                   <Clock size={10} style={{ marginRight: 4 }} />
@@ -251,7 +244,6 @@ function App() {
                 </div>
               )}
 
-              {/* Active task indicator / break bar — mini mode */}
               {timer.mode === "break" ? (() => {
                 const progress = timer.totalModeMs > 0 ? (1 - timer.msLeft / timer.totalModeMs) : 0;
                 const barW = 8;
@@ -282,40 +274,50 @@ function App() {
           <>
             {/* Kolom Kiri */}
             <div className={`left-column ${layoutMode}`}>
-              <div className={`timer-display ${layoutMode}${!timer.isActive ? " idle" : ""}`}>
-                {timer.timeString}
-                <span className={`timer-ms ${layoutMode} ${timer.isActive ? "running" : ""}`}>.{timer.msString}</span>
-              </div>
+              {isExpanded ? (
+                <div className="timer-panel">
+                  <div className={`timer-display ${layoutMode}${!timer.isActive ? " idle" : ""}`}>
+                    {timer.timeString}
+                    <TimerMillis msLeftRef={timer.msLeftRef} isActive={timer.isActive} className={`timer-ms ${layoutMode} ${timer.isActive ? "running" : ""}`} />
+                  </div>
 
-              {/* SlabPixel Tracker - Compact mode */}
-              {showTracker && !isExpanded && (
-                <div className="compact-tracker-display" title="SlabPixel Tracker Timer">
-                  <Clock size={12} style={{ marginRight: 6 }} />
-                  {slabPixel.isLoading && !slabPixel.trackerTime ? "loading..." : (slabPixel.trackerTime || "—")}
-                  {slabPixel.paused && !slabPixel.stopped && slabPixel.trackerTime ? " (Paused)" : ""}
+                  {timer.mode === "break" && (
+                    <BreakOverlay msLeft={timer.msLeft} totalMs={timer.totalModeMs} timeString={timer.timeString} isActive={timer.isActive} layout={layoutMode} />
+                  )}
+
+                  <TimerControls
+                    isActive={timer.isActive}
+                    layout={layoutMode}
+                    onToggle={timer.toggleTimer}
+                    onReset={timer.resetTimer}
+                    onComplete={timer.completeSession}
+                  />
                 </div>
+              ) : (
+                <>
+                  <div className={`timer-display ${layoutMode}${!timer.isActive ? " idle" : ""}`}>
+                    {timer.timeString}
+                    <TimerMillis msLeftRef={timer.msLeftRef} isActive={timer.isActive} className={`timer-ms ${layoutMode} ${timer.isActive ? "running" : ""}`} />
+                  </div>
+
+                  {showTracker && (
+                    <div className="compact-tracker-display" title="SlabPixel Tracker Timer">
+                      <Clock size={12} style={{ marginRight: 6 }} />
+                      {slabPixel.isLoading && !slabPixel.trackerTime ? "loading..." : (slabPixel.trackerTime || "—")}
+                      {slabPixel.paused && !slabPixel.stopped && slabPixel.trackerTime ? " (Paused)" : ""}
+                    </div>
+                  )}
+
+                  <TimerControls
+                    isActive={timer.isActive}
+                    layout={layoutMode}
+                    onToggle={timer.toggleTimer}
+                    onReset={timer.resetTimer}
+                    onComplete={timer.completeSession}
+                  />
+                </>
               )}
 
-              {/* Break overlay — expanded mode, langsung di bawah angka timer */}
-              {isExpanded && timer.mode === "break" && (
-                <BreakOverlay
-                  msLeft={timer.msLeft}
-                  totalMs={timer.totalModeMs}
-                  timeString={timer.timeString}
-                  isActive={timer.isActive}
-                  layout={layoutMode}
-                />
-              )}
-
-              <TimerControls
-                isActive={timer.isActive}
-                layout={layoutMode}
-                onToggle={timer.toggleTimer}
-                onReset={timer.resetTimer}
-                onComplete={timer.completeSession}
-              />
-
-              {/* Active task indicator — compact only */}
               {!isExpanded && (() => {
                 const activeTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
                 return activeTask ? (
@@ -328,18 +330,10 @@ function App() {
                 ) : null;
               })()}
 
-              {/* Break overlay — compact mode only */}
               {!isExpanded && timer.mode === "break" && (
-                <BreakOverlay
-                  msLeft={timer.msLeft}
-                  totalMs={timer.totalModeMs}
-                  timeString={timer.timeString}
-                  isActive={timer.isActive}
-                  layout={layoutMode}
-                />
+                <BreakOverlay msLeft={timer.msLeft} totalMs={timer.totalModeMs} timeString={timer.timeString} isActive={timer.isActive} layout={layoutMode} />
               )}
 
-              {/* Expanded-only content */}
               {isExpanded && (
                 <>
                   <StatsDisplay
@@ -348,7 +342,6 @@ function App() {
                     sessionInCycle={timer.sessionInCycle}
                   />
 
-                  {/* Active Task Indicator - Expanded Full size */}
                   {(() => {
                     const activeTask = tasks.tasks.find(t => t.id === tasks.activeTaskId && !t.completed && !t.archived);
                     return activeTask ? (
@@ -368,17 +361,14 @@ function App() {
                     newTaskText={tasks.newTaskText}
                     activeTaskId={tasks.activeTaskId}
                     onNewTaskTextChange={tasks.setNewTaskText}
-                    onAddTask={tasks.addTask}
+                    onAddTask={handleAddTask}
                     onToggleTask={handleToggleTask}
                     onDeleteTask={tasks.deleteTask}
                     onSetActiveTask={tasks.setActiveTaskId}
                     onOpenDashboard={() => setIsTaskDashboardOpen(true)}
                   />
 
-                  <NotesPanel
-                    note={notes.note}
-                    onNoteChange={notes.setNote}
-                  />
+                  <NotesPanel note={note} onNoteChange={setNote} />
 
                   <RemindersPanel
                     reminders={reminders.reminders}
@@ -402,22 +392,10 @@ function App() {
 
                   <div className="bottom-controls">
                     <WeatherWidget layoutMode={layoutMode} />
-                    <ModeToggle
-                      mode={timer.mode}
-                      onSwitchMode={timer.switchMode}
-                    />
-                    <AmbientToggle
-                      ambientType={ambient.ambientType}
-                      onCycle={ambient.cycleAmbient}
-                    />
-                    <ThemeSelector
-                      currentTheme={theme.themeName}
-                      onSelectTheme={theme.setThemeName}
-                    />
-                    <AsciiToggle
-                      settings={ascii}
-                      onChange={patchAscii}
-                    />
+                    <ModeToggle mode={timer.mode} onSwitchMode={timer.switchMode} />
+                    <AmbientToggle ambientType={ambientType} onCycle={cycleAmbient} />
+                    <ThemeSelector currentTheme={themeName} onSelectTheme={setThemeName} />
+                    <AsciiToggle settings={ascii} onChange={patchAscii} />
                     <button className="tray-btn" onClick={() => setIsDebugOpen(true)} title="Super Admin / Debug">
                       <Bug size={14} />
                     </button>
@@ -431,6 +409,18 @@ function App() {
 
             {/* Kolom Kanan */}
             <div className={`right-column ${layoutMode}`}>
+              {isExpanded && (
+                  <div className="flappy-launcher-box" onClick={openGameWindow} title="Pecahkan skor Flappy Droid!">
+                    <div className="flappy-launcher-left">
+                       <Gamepad2 className="icon blink" size={16} />
+                       <span>FLAPPY_DROID</span>
+                    </div>
+                    <div className="flappy-score-badge">
+                       <span className="dim">HI_SCORE:</span> {game.flappyDroidScore}
+                    </div>
+                  </div>
+              )}
+            
               <RiveCharacter
                 isActive={timer.isActive}
                 isExpanded={isExpanded}
@@ -440,7 +430,6 @@ function App() {
                 ascii={ascii}
               />
 
-              {/* Dashboard & Game di bawah Rive saat expanded */}
               {isExpanded && (
                 <div className="right-panels">
                   <XPDisplay
@@ -492,7 +481,7 @@ function App() {
           onRemoveTag={tasks.removeTagFromTask}
         />
       )}
-      {/* In-app reminder alert — fixed overlay, dismiss dengan [×] */}
+
       <ReminderAlert
         alerts={reminders.alerts}
         onDismiss={reminders.dismissAlert}
@@ -508,6 +497,10 @@ function App() {
           game={game}
           tasks={tasks}
         />
+      )}
+
+      {isGameOpen && (
+        <GameApp onClose={() => setIsGameOpen(false)} />
       )}
     </div>
   );

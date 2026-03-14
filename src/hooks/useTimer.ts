@@ -97,14 +97,23 @@ export function useTimer(
             const elapsed = now - lastTickRef.current;
             lastTickRef.current = now;
 
-            setMsLeft(prev => {
-                const next = Math.max(0, prev - elapsed);
-                if (prev > 0 && next === 0) {
-                    // Fire completion asynchronously so React state settles first
-                    setTimeout(() => completeSessionRef.current(), 0);
+            const prevMs = msLeftRef.current;
+            const nextMs = Math.max(0, prevMs - elapsed);
+            msLeftRef.current = nextMs;
+
+            const prevSecond = Math.ceil(prevMs / 1000);
+            const nextSecond = Math.ceil(nextMs / 1000);
+
+            if (nextSecond !== prevSecond || (prevMs > 0 && nextMs === 0)) {
+                if (prevMs > 0 && nextMs === 0) {
+                    setMsLeft(0);
+                    // Delay 3s for focusEnd animation before switching to break
+                    const delayMs = modeRef.current === "focus" ? 3000 : 0;
+                    setTimeout(() => completeSessionRef.current(), delayMs);
+                } else {
+                    setMsLeft(nextMs);
                 }
-                return next;
-            });
+            }
 
             rafRef.current = requestAnimationFrame(tick);
         };
@@ -179,6 +188,7 @@ export function useTimer(
     return {
         timeString,
         msString,
+        msLeftRef,
         msLeft,
         totalModeMs: mode === "focus"
             ? focusMs
