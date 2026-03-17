@@ -2515,3 +2515,51 @@ body,
   display: flex;
   gap: 6px;
 }
+
+/* ===== FLAPPY DROID LAUNCHER ===== */
+.flappy-launcher-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 255, 65, 0.03);
+  border: 1px dashed var(--accent-break);
+  padding: 8px 12px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  border-radius: 0px;
+}
+
+.flappy-launcher-box:hover {
+  background: rgba(0, 255, 65, 0.08);
+  border-color: var(--accent-focus);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+}
+
+.flappy-launcher-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-break);
+  font-weight: bold;
+}
+
+.flappy-score-badge {
+  background: var(--bg-secondary);
+  padding: 2px 8px;
+  border-radius: 0px;
+  color: var(--accent-focus);
+  font-weight: bold;
+  font-size: 14px;
+  border: 1px solid var(--border-color);
+}
+
+.flappy-score-badge .dim {
+  color: var(--text-dim);
+  font-size: 10px;
+  margin-right: 4px;
+}

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useRive, useViewModelInstanceNumber, useViewModelInstanceTrigger } from "@rive-app/react-webgl2";
-import catRiv from "../assets/rive/cat_10.riv";
+import catRiv from "../assets/rive/cat_12.riv";
 import type { Mode, RiveMood } from "../types";
 import { useAsciiFilter } from "../hooks/useAsciiFilter";
 import type { AsciiSettings } from "./AsciiToggle";
