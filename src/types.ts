@@ -36,7 +36,7 @@ export interface Task {
 /**
  * Nama tema yang tersedia.
  */
-export type ThemeName = "matrix" | "cyberpunk" | "nord" | "dracula" | "catppuccin" | "outrun" | "monochrome";
+export type ThemeName = "warm" | "warmDark";
 
 /**
  * Konfigurasi warna CSS variables untuk setiap tema.
@@ -55,6 +55,8 @@ export interface ThemeColors {
     "--accent-danger": string;
     "--accent-success": string;
     "--border-glow": string;
+    "--font-family"?: string;
+    "--border-radius"?: string;
 }
 
 /**

@@ -1,33 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useWeather } from '../hooks/useWeather';
-import './WeatherWidget.css';
+import { Sun, Moon, Cloud, CloudFog, CloudDrizzle, CloudRain, Snowflake, CloudLightning, HelpCircle, Loader2, CloudOff, MapPin } from "lucide-react";
 import type { LayoutMode } from '../types';
 
-const WEATHER_FRAMES: Record<string, string[]> = {
-    ClearDay: ["\\O/", "-O-", "/O\\", "|O|"],
-    ClearNight: ["c *", "* c", "c  ", " *c"],
-    Cloudy: ["(--)", "(--)", "(--)", "(--)"],
-    Fog: ["- -", " - ", "- -", " - "],
-    Drizzle: [" , ", ", ,", " , ", ", ,"],
-    Rain: ["///", "|||", "\\\\\\", "|||"],
-    Snow: [" * ", "* *", " * ", "** "],
-    Showers: ["// ", " //", "// ", " //"],
-    Thunderstorm: ["_Z_", "~Z~", "-Z-", " Z "],
-    Unknown: ["?_?", " ? ", "?_?", " ? "]
-};
-
-export const AnimatedAsciiIcon = ({ iconKey }: { iconKey: string }) => {
-    const [frameIndex, setFrameIndex] = useState(0);
-    const frames = WEATHER_FRAMES[iconKey] || WEATHER_FRAMES.Unknown;
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setFrameIndex((prev) => (prev + 1) % frames.length);
-        }, 400);
-        return () => clearInterval(interval);
-    }, [frames]);
-
-    return <span className="weather-icon" title={`Key: ${iconKey}`}>{frames[frameIndex]}</span>;
+export const WeatherIcon = ({ iconKey, className }: { iconKey: string, className?: string }) => {
+    switch (iconKey) {
+        case "ClearDay": return <Sun size={14} className={className} />;
+        case "ClearNight": return <Moon size={14} className={className} />;
+        case "Cloudy": return <Cloud size={14} className={className} />;
+        case "Fog": return <CloudFog size={14} className={className} />;
+        case "Drizzle": return <CloudDrizzle size={14} className={className} />;
+        case "Rain": return <CloudRain size={14} className={className} />;
+        case "Snow": return <Snowflake size={14} className={className} />;
+        case "Showers": return <CloudRain size={14} className={className} />;
+        case "Thunderstorm": return <CloudLightning size={14} className={className} />;
+        default: return <HelpCircle size={14} className={className} />;
+    }
 };
 
 interface WeatherWidgetProps {
@@ -38,24 +26,32 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ layoutMode }) => {
     const weather = useWeather();
 
     if (layoutMode === "mini") {
-        // Mini mode might not have space for weather, but we can show a tiny icon if we want
-        // We'll return null to keep mini mode clean
         return null;
     }
 
     return (
-        <div className={`weather-widget ${layoutMode}`} title={`${weather.locationName} - ${weather.condition}`}>
+        <div className="flex items-center gap-3">
             {weather.isLoading ? (
-                <span className="weather-loading">skymap_init...</span>
+                <div className="flex items-center gap-1.5 text-stone-400">
+                    <Loader2 size={12} className="animate-spin" />
+                    <span className="text-[10px] uppercase font-medium tracking-widest text-stone-500">Loading...</span>
+                </div>
             ) : weather.error && !weather.temperature ? (
-                <span className="weather-error">[weather: OFFLINE]</span>
+                <div className="flex items-center gap-1.5 text-red-400">
+                    <CloudOff size={12} />
+                    <span className="text-[10px] uppercase font-medium tracking-widest">Offline</span>
+                </div>
             ) : (
                 <>
-                    <AnimatedAsciiIcon iconKey={weather.icon} />
-                    <span className="weather-temp">{weather.temperature}°C</span>
-                    {layoutMode === "expanded" && (
-                        <span className="weather-loc">[{weather.locationName?.toUpperCase()}]</span>
-                    )}
+                    <div className="flex items-center gap-1">
+                        <Cloud size={12} className="text-stone-400" />
+                        <span className="text-xs text-stone-300">{weather.temperature}°C</span>
+                    </div>
+                    <div className="w-1 h-1 rounded-full bg-stone-600" />
+                    <div className="flex items-center gap-1">
+                        <MapPin size={12} className="text-stone-400" />
+                        <span className="text-xs text-stone-300 uppercase">{weather.locationName}</span>
+                    </div>
                 </>
             )}
         </div>

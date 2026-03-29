@@ -1,32 +1,37 @@
+import { Progress } from "@/components/ui/progress";
+
 interface StatsDisplayProps {
     todaySessions: number;
     todayFocusMinutes: number;
-    sessionInCycle: number; // 0-3, posisi dalam siklus 4 sesi
+    sessionInCycle: number;
 }
 
-/**
- * Menampilkan statistik harian dalam gaya terminal.
- */
 export function StatsDisplay({ todaySessions, todayFocusMinutes, sessionInCycle }: StatsDisplayProps) {
-    // Progress bar visual: [██░░] (4 slot)
-    const filled = sessionInCycle;
-    const empty = 4 - filled;
-    const progressBar = "█".repeat(filled) + "░".repeat(empty);
+    const cycleProgress = (sessionInCycle / 4) * 100;
 
     return (
-        <div className="stats-display">
-            <div className="stats-title">&gt; stats_today</div>
-            <div className="stats-row">
-                <span className="stats-label">sessions:</span>
-                <span className="stats-value">{todaySessions}</span>
+        <div className="flex flex-col">
+            <div className="flex items-center justify-between h-9 border-b border-stone-50">
+                <span className="text-[11px] uppercase tracking-wide text-stone-400">Sessions Completed</span>
+                <span className="text-sm font-semibold text-stone-700">{todaySessions}</span>
             </div>
-            <div className="stats-row">
-                <span className="stats-label">focus_time:</span>
-                <span className="stats-value">{todayFocusMinutes} min</span>
+
+            <div className="flex items-center justify-between h-9 border-b border-stone-50">
+                <span className="text-[11px] uppercase tracking-wide text-stone-400">Focus Time</span>
+                <span className="text-sm font-semibold text-stone-700">
+                    {todayFocusMinutes}<span className="text-[10px] text-stone-400 font-normal ml-0.5">min</span>
+                </span>
             </div>
-            <div className="stats-row">
-                <span className="stats-label">cycle:</span>
-                <span className="stats-value">{sessionInCycle}/4 [{progressBar}]</span>
+
+            <div className="flex items-center justify-between h-9 border-b border-stone-50">
+                <span className="text-[11px] uppercase tracking-wide text-stone-400">Cycle Progress</span>
+                <span className="text-sm font-semibold text-stone-700">
+                    {sessionInCycle}<span className="text-[10px] text-stone-400 font-normal">/4</span>
+                </span>
+            </div>
+
+            <div className="pt-3">
+                <Progress value={cycleProgress} className="h-1.5 w-full bg-stone-100 [&>div]:bg-orange-500" />
             </div>
         </div>
     );

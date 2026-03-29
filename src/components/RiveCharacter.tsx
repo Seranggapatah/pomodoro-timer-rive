@@ -28,9 +28,7 @@ const MOOD_TO_TRIGGER: Record<RiveMood, string> = {
 };
 
 export function RiveCharacter({
-    isActive,
     isExpanded,
-    mode,
     mood,
     layoutMode,
     xpPercent = 0,
@@ -97,11 +95,7 @@ export function RiveCharacter({
     });
 
     return (
-        <div className={`rive-container ${size}`}>
-            {isActive && isExpanded && (
-                <div className={`rive-glow ${mode === "focus" ? "focus" : "break"}`} />
-            )}
-
+        <div className={`rive-container bg-transparent border-0 ${size} ${size === 'expanded' ? 'w-full h-full max-w-none flex items-center justify-center' : ''}`}>
             {/* ASCII badge when active */}
             {asciiEnabled && (
                 <div className="ascii-active-badge" aria-hidden="true">
@@ -110,16 +104,17 @@ export function RiveCharacter({
             )}
 
             {/* containerRef wraps both Rive + overlay canvas */}
-            <div className="rive-inner" ref={containerRef} style={{ position: "relative" }}>
+            <div className="rive-inner bg-transparent" ref={containerRef} style={{ position: "relative" }}>
                 {/* Rive animation — dimmed when ASCII is on */}
-                <div style={{ opacity: asciiEnabled ? 0 : 1, transition: "opacity 0.4s ease", width: "100%", height: "100%", position: "absolute", inset: 0 }}>
+                <div style={{ opacity: asciiEnabled ? 0 : 1, transition: "opacity 0.4s ease", width: "100%", height: "100%", position: "absolute", inset: 0, background: "transparent" }}>
                     <RiveComponent
+                        style={{ background: "transparent" }}
                         className={
                             size === "mini"
-                                ? "rive-component-mini"
+                                ? "rive-component-mini bg-transparent"
                                 : isExpanded
-                                    ? "rive-component-expanded"
-                                    : "rive-component-compact"
+                                    ? "rive-component-expanded bg-transparent"
+                                    : "rive-component-compact bg-transparent"
                         }
                     />
                 </div>

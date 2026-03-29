@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CheckCircle2, Circle, Archive, RotateCcw, Trash2, Plus, CornerDownRight, Edit2, Tag } from "lucide-react";
+import { X, CheckCircle2, Circle, Archive, RotateCcw, Trash2, Plus, CornerDownRight, Edit2, Tag, Calendar, Timer, Clock } from "lucide-react";
 import type { Task } from "../types";
 
 interface TaskDashboardOverlayProps {
@@ -154,7 +154,7 @@ export function TaskDashboardOverlay({
                                 </div>
 
                                 {task.pomodoroCount > 0 && (
-                                    <span className="task-pomodoro-count">🍅{task.pomodoroCount}</span>
+                                    <span className="task-pomodoro-count flex items-center gap-1"><Timer size={10} /> {task.pomodoroCount}</span>
                                 )}
 
                                 <div className="dashboard-task-actions">
@@ -253,21 +253,21 @@ export function TaskDashboardOverlay({
                             {/* Extended Report */}
                             <div className="task-meta-report">
                                 <div className="meta-item" title="Created On">
-                                    <span className="meta-icon">🗓️</span>
+                                    <Calendar size={10} className="meta-icon text-stone-400" />
                                     <span>{formatDateTime(task.createdAt || task.id)}</span>
                                 </div>
                                 {task.completedAt ? (
                                     <div className="meta-item" title="Completed On">
-                                        <span className="meta-icon">✅</span>
+                                        <CheckCircle2 size={10} className="meta-icon text-emerald-500" />
                                         <span>{formatDateTime(task.completedAt)}</span>
                                     </div>
                                 ) : null}
                                 <div className="meta-item" title="Sessions (Pomodoros)">
-                                    <span className="meta-icon">🍅</span>
+                                    <Timer size={10} className="meta-icon text-orange-400" />
                                     <span>{task.pomodoroCount} sessions</span>
                                 </div>
                                 <div className="meta-item" title="Total Time Spent">
-                                    <span className="meta-icon">⏱️</span>
+                                    <Clock size={10} className="meta-icon text-sky-400" />
                                     <span>{formatTimeSpent(task.timeSpentMinutes)}</span>
                                 </div>
                             </div>
@@ -444,9 +444,9 @@ export function TaskDashboardOverlay({
                         </button>
                     </form>
 
-                    {renderTaskList(activeTasks, "🟢 ACTIVE / UPCOMING TASKS")}
-                    {renderTaskList(completedTasks, "✔️ COMPLETED TASKS")}
-                    {renderTaskList(archivedTasks, "📦 ARCHIVED TASKS")}
+                    {renderTaskList(activeTasks, "ACTIVE / UPCOMING TASKS")}
+                    {renderTaskList(completedTasks, "COMPLETED TASKS")}
+                    {renderTaskList(archivedTasks, "ARCHIVED TASKS")}
                 </div>
             </div>
         </div>

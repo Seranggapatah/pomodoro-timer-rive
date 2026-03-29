@@ -1,52 +1,52 @@
 import React, { useState, useEffect } from "react";
 import { useWeather } from "../hooks/useWeather";
-import { AnimatedAsciiIcon } from "./WeatherWidget";
-import type { LayoutMode } from "../types";
-import "./TitleBarWeatherTicker.css";
+import { WeatherIcon } from "./WeatherWidget";
+import { CloudOff, Loader2 } from "lucide-react";
 
-interface Props {
-    layoutMode: LayoutMode;
-}
-
-export const TitleBarWeatherTicker: React.FC<Props> = ({ layoutMode }) => {
+export const TitleBarWeatherTicker: React.FC = () => {
     const weather = useWeather();
     const [tick, setTick] = useState(0);
 
-    // Swap content every 8 seconds
+    const tickerItems = [
+        <div key="loc" className="flex items-center gap-1.5 opacity-90">
+            <span className="font-bold text-[10px] tracking-widest uppercase">Location</span>
+            <span className="text-xs uppercase tracking-widest">{weather.locationName}</span>
+        </div>,
+        <div key="cond" className="flex items-center gap-1.5 opacity-90">
+            <span className="font-bold text-[10px] tracking-widest uppercase">Cond</span>
+            <span className="text-xs uppercase tracking-widest flex items-center gap-1.5">
+                <WeatherIcon iconKey={weather.icon} />
+                {weather.condition}
+            </span>
+        </div>,
+        <div key="temp" className="flex items-center gap-1.5 opacity-90">
+            <span className="font-bold text-[10px] tracking-widest uppercase">Temp</span>
+            <span className="text-xs uppercase tracking-widest">{weather.temperature}°C</span>
+        </div>
+    ];
+
     useEffect(() => {
-        const interval = setInterval(() => {
-            setTick((prev) => (prev === 0 ? 1 : 0));
-        }, 8000);
-        return () => clearInterval(interval);
-    }, []);
-
-    // Don't render until loaded
-    if (weather.isLoading && !weather.temperature) return null;
-
-    // Minimal error state
-    if (weather.error && !weather.temperature) return null;
-
-    // Abbreviate location name in compact mode (e.g. "JAKARTA" -> "JAK")
-    let displayLoc = weather.locationName?.toUpperCase() || "UNK";
-    if (layoutMode === "compact" && displayLoc.length > 3) {
-        // Strip vowels to make an acronym, or just take first 3 chars
-        displayLoc = displayLoc.substring(0, 3);
-    }
+        const idx = setInterval(() => {
+            setTick((prev) => (prev + 1) % tickerItems.length);
+        }, 5000);
+        return () => clearInterval(idx);
+    }, [tickerItems.length]);
 
     return (
-        <div className="titlebar-ticker-container">
-            <span className="titlebar-sep">·</span>
-            <div className="titlebar-ticker-viewport">
-                <div className={`titlebar-ticker-track index-${tick}`}>
-                    <div className="titlebar-ticker-item">
-                        <AnimatedAsciiIcon iconKey={weather.icon} />
-                        <span style={{ marginLeft: "4px" }}>{weather.temperature}°C</span>
-                    </div>
-                    <div className="titlebar-ticker-item">
-                        <span className="ticker-location">[{displayLoc}]</span>
-                    </div>
+        <div className="flex items-center gap-2 text-muted-foreground mr-1 h-full px-2">
+            {weather.isLoading ? (
+                <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest opacity-60">
+                    <Loader2 size={10} className="animate-spin" /> SKY_INIT
                 </div>
-            </div>
+            ) : weather.error ? (
+                <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-destructive opacity-80">
+                    <CloudOff size={10} /> OFFLINE
+                </div>
+            ) : (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 overflow-hidden flex items-center min-w-[120px]">
+                    {tickerItems[tick]}
+                </div>
+            )}
         </div>
     );
 };

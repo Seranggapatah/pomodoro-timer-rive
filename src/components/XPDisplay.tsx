@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Star, Zap } from "lucide-react";
 
 interface XPDisplayProps {
     level: number;
@@ -6,12 +7,10 @@ interface XPDisplayProps {
     xpToNextLevel: number;
     xpPercent: number;
     totalXp: number;
+    className?: string; // allow overrides
 }
 
-/**
- * XP bar + level display dengan animasi fill saat XP bertambah.
- */
-export function XPDisplay({ level, xp, xpToNextLevel, xpPercent, totalXp }: XPDisplayProps) {
+export function XPDisplay({ level, xp, xpToNextLevel, xpPercent, totalXp, className }: XPDisplayProps) {
     const [animatedPercent, setAnimatedPercent] = useState(xpPercent);
     const [showGain, setShowGain] = useState(false);
     const [gainAmount, setGainAmount] = useState(0);
@@ -21,9 +20,7 @@ export function XPDisplay({ level, xp, xpToNextLevel, xpPercent, totalXp }: XPDi
     // Animasikan XP bar ketika XP bertambah
     useEffect(() => {
         const diff = xp - prevXpRef.current;
-        // diff > 0: xp naik biasa; diff < 0: bisa berarti level-up (xp wrap)
         if (diff !== 0) {
-            // Hitung actual XP gained (level-up mungkin wrap angka)
             const gained = diff > 0 ? diff : xpToNextLevel + diff;
             setGainAmount(gained > 0 ? gained : 0);
             setShowGain(true);
@@ -33,53 +30,44 @@ export function XPDisplay({ level, xp, xpToNextLevel, xpPercent, totalXp }: XPDi
         }
         prevXpRef.current = xp;
 
-        // Smooth animate ke percent baru
         const timer = setTimeout(() => setAnimatedPercent(xpPercent), 50);
         return () => clearTimeout(timer);
     }, [xp, xpPercent, xpToNextLevel]);
 
-    // Warna bar berdasarkan percent
-    const barColor = xpPercent >= 80
-        ? "xp-bar-fill--high"
-        : xpPercent >= 40
-            ? "xp-bar-fill--mid"
-            : "xp-bar-fill--low";
-
     return (
-        <div className="xp-display">
-            {/* Header row: level badge + xp numbers */}
-            <div className="xp-header">
-                <div className="xp-level-badge">
-                    <span className="xp-level-icon">★</span>
-                    <span className="xp-level-text">LVL {level}</span>
+        <div className={className || "flex flex-col gap-4 p-4 w-full relative"}>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="bg-orange-500/10 text-orange-500 p-2 rounded-xl flex items-center justify-center">
+                        <Star size={16} className="fill-orange-500 text-orange-500" />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-bold leading-tight text-stone-800">Level {level}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-stone-400 font-medium mt-0.5">{totalXp.toLocaleString()} Total XP</span>
+                    </div>
                 </div>
-
-                <div className="xp-numbers">
-                    <span className="xp-current">{xp}</span>
-                    <span className="xp-separator"> / </span>
-                    <span className="xp-max">{xpToNextLevel} XP</span>
+                <div className="flex flex-col items-end">
+                    <div className="flex items-center font-bold text-lg leading-tight text-stone-800 font-mono">
+                        {xp} <span className="text-stone-400 font-normal text-sm ml-1">/ {xpToNextLevel}</span>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-widest text-orange-500 font-bold flex items-center gap-1 mt-0.5">
+                        <Zap size={10} className="fill-orange-500" /> {xpPercent.toFixed(0)}% TO NEXT
+                    </span>
                 </div>
-
-                {/* Floating "+XP" notification */}
+            </div>
+            
+            <div className="relative mt-2">
+                <div className="w-full h-2.5 bg-stone-100 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-orange-500 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${animatedPercent}%` }}
+                    />
+                </div>
                 {showGain && gainAmount > 0 && (
-                    <div className="xp-gain-popup">+{gainAmount} XP</div>
+                    <div className="absolute -top-7 right-0 text-xs font-bold text-orange-500 animate-in slide-in-from-bottom-2 fade-in">
+                        +{gainAmount} XP
+                    </div>
                 )}
-            </div>
-
-            {/* Progress bar */}
-            <div className="xp-bar-track">
-                <div
-                    className={`xp-bar-fill ${barColor}`}
-                    style={{ width: `${animatedPercent}%` }}
-                />
-                {/* Scanline overlay */}
-                <div className="xp-bar-scanline" />
-            </div>
-
-            {/* Footer: percent + total XP */}
-            <div className="xp-footer">
-                <span className="xp-percent">{xpPercent}% to next level</span>
-                <span className="xp-total">total: {totalXp.toLocaleString()} XP</span>
             </div>
         </div>
     );

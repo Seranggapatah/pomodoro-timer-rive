@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import "./Legacy.css";
 // ─── Patch WebGL2 context creation ──────────────────────────────────────────
 // Rive WebGL2 renderer reads pixels during ASCII conversion.
 // By default WebGL2 clears the drawing buffer after each frame ("swap"),
@@ -21,8 +22,12 @@ HTMLCanvasElement.prototype.getContext = function (
 };
 // ────────────────────────────────────────────────────────────────────────────
 
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    <TooltipProvider>
+      <App />
+    </TooltipProvider>
   </React.StrictMode>,
 );

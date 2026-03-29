@@ -6,22 +6,30 @@ interface ModeToggleProps {
 }
 
 /**
- * Tombol mode terminal-style: FOCUS / BREAK
+ * Pill-style mode toggle: POMODORO / BREAK
  */
 export function ModeToggle({ mode, onSwitchMode }: ModeToggleProps) {
     return (
-        <div className="mode-toggles visible">
+        <div className="flex items-center bg-stone-800 rounded-full p-0.5 gap-0.5">
             <button
                 onClick={() => onSwitchMode("focus")}
-                className={`mode-btn ${mode === "focus" ? "focus-active" : "inactive"}`}
+                className={`px-3 py-1 text-[11px] font-bold rounded-full transition-all ${
+                    mode === "focus"
+                        ? "bg-orange-500 text-white"
+                        : "text-stone-400 hover:text-stone-200"
+                }`}
             >
-                [pomodoro]
+                POMODORO
             </button>
             <button
                 onClick={() => onSwitchMode("break")}
-                className={`mode-btn ${mode === "break" ? "break-active" : "inactive"}`}
+                className={`px-3 py-1 text-[11px] font-bold rounded-full transition-all ${
+                    mode === "break"
+                        ? "bg-orange-500 text-white"
+                        : "text-stone-400 hover:text-stone-200"
+                }`}
             >
-                [break]
+                BREAK
             </button>
         </div>
     );

@@ -25,79 +25,41 @@
 
 /* Timer Display */
 .timer-display {
-    transition: color 0.6s ease, text-shadow 0.6s ease, opacity 0.6s ease;
+    color: #1c1917 !important; /* stone-900 — NEVER changes */
+    transition: text-shadow 0.6s ease, opacity 0.6s ease;
 }
 
 /* ── Idle: redupkan jam saat timer tidak berjalan ── */
 .timer-display.idle {
     opacity: 0.35;
-    color: var(--text-dim);
     text-shadow: none;
     animation: idle-breathe 3.5s ease-in-out infinite;
 }
 
 @keyframes idle-breathe {
-
-    0%,
-    100% {
-        opacity: 0.35;
-    }
-
-    50% {
-        opacity: 0.55;
-    }
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.55; }
 }
 
-/* Idle state on break mode */
+/* Idle state on break mode — no color change */
 .app-container.break .timer-display.idle {
-    color: var(--accent-break);
     opacity: 0.3;
     animation: idle-breathe-break 3.5s ease-in-out infinite;
 }
 
 @keyframes idle-breathe-break {
-
-    0%,
-    100% {
-        opacity: 0.30;
-    }
-
-    50% {
-        opacity: 0.50;
-    }
+    0%, 100% { opacity: 0.30; }
+    50% { opacity: 0.50; }
 }
 
-.app-container.break .timer-display {
-    color: var(--accent-break);
-    text-shadow: 0 0 12px var(--border-glow);
-}
-
-
+/* no color or shadow overrides for .timer-display in break mode */
 
 @keyframes pulse-break {
-    0% {
-        opacity: 0.4;
-        text-shadow: none;
-    }
-
-    100% {
-        opacity: 1;
-        text-shadow: 0 0 8px var(--accent-break);
-    }
+    0% { opacity: 0.4; text-shadow: none; }
+    100% { opacity: 1; }
 }
 
-.timer-display::after {
-    color: inherit !important;
-}
-
-/* ── Cursor blink speed: lebih cepat saat running, lambat saat idle ── */
-.timer-display:not(.idle)::after {
-    animation-duration: 0.45s;
-}
-
-.timer-display.idle::after {
-    animation-duration: 1.5s;
-}
+/* Cursor blink removed — was inheriting legacy green */
 
 /* ── Glitch effect saat sesi selesai (mood: happy) ── */
 @keyframes timer-glitch {
@@ -249,18 +211,6 @@
     margin-top: 4px;
     padding-top: 4px;
     border-top: 1px dashed var(--border-color);
-}
-
-.timeline-history::-webkit-scrollbar {
-    width: 4px;
-}
-
-.timeline-history::-webkit-scrollbar-track {
-    background: var(--bg-primary);
-}
-
-.timeline-history::-webkit-scrollbar-thumb {
-    background: var(--border-color);
 }
 
 /* Compact Active Task */
