@@ -236,7 +236,7 @@ function App() {
                 letterSpacing: "0.08em",
                 padding: "2px 6px",
                 borderRadius: "9999px",
-                background: timer.mode === "focus" ? "#f97316" : "#22c55e",
+                background: "var(--color-orange-500)",
                 color: "white",
                 lineHeight: 1,
                 zIndex: 10,
@@ -326,12 +326,12 @@ function App() {
               {/* Time tracker row */}
               {showTracker && (
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Clock size={10} color="#fb923c" />
+                  <Clock size={10} color="var(--color-orange-400)" />
                   <span
                     style={{
                       fontSize: "11px",
                       fontFamily: "monospace",
-                      color: "#f97316",
+                      color: "var(--color-orange-500)",
                       lineHeight: 1,
                     }}
                   >
@@ -385,7 +385,7 @@ function App() {
                   width: "32px",
                   height: "32px",
                   borderRadius: "50%",
-                  background: "#f97316",
+                  background: "var(--color-orange-500)",
                   border: "none",
                   cursor: "pointer",
                   display: "flex",
@@ -394,8 +394,8 @@ function App() {
                   flexShrink: 0,
                   transition: "background 0.15s, transform 0.1s",
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#ea7211")}
-                onMouseLeave={e => (e.currentTarget.style.background = "#f97316")}
+                onMouseEnter={e => (e.currentTarget.style.background = "var(--color-orange-600)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "var(--color-orange-500)")}
                 onMouseDown={e => (e.currentTarget.style.transform = "scale(0.93)")}
                 onMouseUp={e => (e.currentTarget.style.transform = "scale(1)")}
               >
