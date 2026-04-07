@@ -70,18 +70,17 @@ export function SettingsPanel({
     onToggleAutoStartOnLogin,
 }: SettingsPanelProps) {
     return (
-        <details className="group flex flex-col p-4 gap-0 border border-stone-200 rounded-xl bg-white w-full overflow-hidden">
-            <summary className="cursor-pointer select-none list-none flex items-center justify-between outline-none mb-3">
+        <div className="flex flex-col p-4 gap-0 border border-stone-200 rounded-xl bg-white overflow-hidden w-full">
+            <div className="select-none flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <Settings2 size={14} className="text-orange-400" />
                     <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-500">CONFIGURATION</span>
                 </div>
-                <span className="text-stone-400 group-open:rotate-90 transition-transform">▸</span>
-            </summary>
+            </div>
             
-            <Separator className="my-0 hidden group-open:block" />
+            <Separator className="my-0 block" />
             
-            <div className="flex-col gap-4 mt-3 hidden group-open:flex">
+            <div className="flex-col gap-4 mt-3 flex">
                 <DurationRow label="Focus (min)" value={focusDuration} min={1} max={120} step={5} onChange={onFocusDurationChange} />
                 <DurationRow label="Break (min)" value={breakDuration} min={1} max={60} step={1} onChange={onBreakDurationChange} />
                 <DurationRow label="Long Break" value={longBreakDuration} min={1} max={60} step={5} onChange={onLongBreakDurationChange} />
@@ -104,6 +103,6 @@ export function SettingsPanel({
                 </div>
             </div>
 
-        </details>
+        </div>
     );
 }
